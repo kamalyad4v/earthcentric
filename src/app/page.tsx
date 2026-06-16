@@ -5,9 +5,10 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button, Card, Badge, LiquidButton, MetalButton } from "@/components/ui/shared";
 import { FadeIn, FadeInStagger, FadeInStaggerItem, ScaleHover } from "@/components/FramerComponents";
-import { ShieldCheck, Award, Leaf, ArrowRight, ArrowUpRight, RefreshCw, ChevronRight, Star, MessageSquare } from "lucide-react";
+import { ShieldCheck, Award, Leaf, ArrowRight, ArrowUpRight, RefreshCw, ChevronRight, Star, MessageSquare, ShoppingBag, MapPin, CheckCircle } from "lucide-react";
 import DisplayCards from "@/components/ui/display-cards";
 import ScrollGlobe from "@/components/ui/scroll-globe";
+import { useCart } from "@/context/CartContext";
 
 const CATEGORIES = [
   {
@@ -110,6 +111,177 @@ const SUSTAINABILITY_DATA = [
   }
 ];
 
+const FEATURED_PRODUCTS = [
+  {
+    id: "prod-1",
+    name: "Biodegradable Bamboo Toothbrush",
+    category: "Zero-Waste Living",
+    price: 149,
+    image: "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=400",
+    sustainabilityScore: 98,
+    sellerName: "EcoStore India",
+    sellerId: "seller-1",
+  },
+  {
+    id: "prod-2",
+    name: "Organic Raw Cotton Shirt",
+    category: "Organic Apparel",
+    price: 1299,
+    image: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=400",
+    sustainabilityScore: 92,
+    sellerName: "Organic Apparel Co.",
+    sellerId: "seller-2",
+  },
+  {
+    id: "prod-3",
+    name: "Solar Powered Utility Lamp",
+    category: "Renewable Energy",
+    price: 849,
+    image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800",
+    sustainabilityScore: 95,
+    sellerName: "SunTech Solar",
+    sellerId: "seller-3",
+  },
+  {
+    id: "prod-4",
+    name: "Recycled Waste Paper Notebook",
+    category: "Eco Home Goods",
+    price: 249,
+    image: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=400",
+    sustainabilityScore: 88,
+    sellerName: "KraftPaper Ltd.",
+    sellerId: "seller-4",
+  },
+  {
+    id: "prod-5",
+    name: "Zero-Waste Solid Shampoo Bar",
+    category: "Zero-Waste Living",
+    price: 299,
+    image: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=400",
+    sustainabilityScore: 96,
+    sellerName: "GreenCare Essentials",
+    sellerId: "seller-5",
+  },
+  {
+    id: "prod-6",
+    name: "Hemp Fiber Laptop Sleeve",
+    category: "Organic Apparel",
+    price: 949,
+    image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400",
+    sustainabilityScore: 91,
+    sellerName: "BioWeave Textiles",
+    sellerId: "seller-6",
+  },
+  {
+    id: "prod-7",
+    name: "Upcycled Coconut Shell Bowls (Set of 2)",
+    category: "Eco Home Goods",
+    price: 399,
+    image: "https://images.unsplash.com/photo-1533038590840-1cde6b66b706?w=400",
+    sustainabilityScore: 94,
+    sellerName: "EarthHome Crafts",
+    sellerId: "seller-7",
+  },
+  {
+    id: "prod-8",
+    name: "Portable Solar Cooker Oven",
+    category: "Renewable Energy",
+    price: 4499,
+    image: "https://images.unsplash.com/photo-1613665813446-82a78c468a1d?w=400",
+    sustainabilityScore: 97,
+    sellerName: "EcoSolar Labs",
+    sellerId: "seller-8",
+  },
+  {
+    id: "prod-9",
+    name: "Recycled Ocean Plastic Sunglasses",
+    category: "Zero-Waste Living",
+    price: 1899,
+    image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400",
+    sustainabilityScore: 78,
+    sellerName: "OceanGuard Eyewear",
+    sellerId: "seller-9",
+  },
+  {
+    id: "prod-10",
+    name: "Bamboo Fiber Coffee Travel Mug",
+    category: "Eco Home Goods",
+    price: 499,
+    image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400",
+    sustainabilityScore: 85,
+    sellerName: "BambooPure Products",
+    sellerId: "seller-10",
+  },
+  {
+    id: "prod-11",
+    name: "Organic Cotton Canvas Tote Bag",
+    category: "Organic Apparel",
+    price: 299,
+    image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400",
+    sustainabilityScore: 68,
+    sellerName: "LoomCraft Textiles",
+    sellerId: "seller-11",
+  },
+  {
+    id: "prod-12",
+    name: "Solar Powered Outdoor Power Bank",
+    category: "Renewable Energy",
+    price: 1499,
+    image: "https://images.unsplash.com/photo-1624996379697-f01d168b1a52?w=400",
+    sustainabilityScore: 74,
+    sellerName: "SolTech Outdoors",
+    sellerId: "seller-12",
+  }
+];
+
+const SELLERS = [
+  {
+    name: "OrganoCraft Exports",
+    location: "India",
+    category: "Organic Apparel & Cotton",
+    score: 96,
+    productCount: 142,
+    image: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400",
+    description: "Specializing in GOTS-certified organic raw cotton cultivation and weaving.",
+  },
+  {
+    name: "Hanseatic Green Brands",
+    location: "Germany",
+    category: "Zero-Waste Packaging",
+    score: 98,
+    productCount: 48,
+    image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400",
+    description: "Carbon-neutral local distribution networks utilizing compostable raw materials.",
+  },
+  {
+    name: "Pacific Eco Manufacturers",
+    location: "USA",
+    category: "Renewable Energy Devices",
+    score: 94,
+    productCount: 89,
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400",
+    description: "High-grade solar cells and monocrystalline solar equipment manufacturing.",
+  },
+  {
+    name: "BioWeave Textiles",
+    location: "India",
+    category: "Hemp & Flax Apparel",
+    score: 91,
+    productCount: 64,
+    image: "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=400",
+    description: "Chemical-free linen, hemp, and bamboo fiber yarn manufacturers.",
+  },
+  {
+    name: "EarthHome Repurposers",
+    location: "Germany",
+    category: "Upcycled Timber Goods",
+    score: 89,
+    productCount: 37,
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400",
+    description: "Repurposed premium architectural waste and circular interior design items.",
+  }
+];
+
 function AnimatedCounter({ value, isDecimal = false, suffix = "" }: { value: number; isDecimal?: boolean; suffix?: string }) {
   const [count, setCount] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -165,6 +337,8 @@ function AnimatedCounter({ value, isDecimal = false, suffix = "" }: { value: num
 }
 
 export default function Homepage() {
+  const { addToCart } = useCart();
+  const [addedItemName, setAddedItemName] = useState<string | null>(null);
   const [selectedWowProduct, setSelectedWowProduct] = useState(SUSTAINABILITY_DATA[0]);
 
   const sections = [
@@ -206,15 +380,22 @@ export default function Homepage() {
                   </Link>
                 </div>
 
-                <div className="pt-6 border-t border-[#d0c6b8]/30 max-w-lg flex items-center space-x-8 text-xs text-muted-foreground font-semibold">
+                <div className="pt-6 border-t border-[#d0c6b8]/30 max-w-xl grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs text-muted-foreground font-semibold">
                   <div>
-                    <span className="block text-lg font-black text-primary">100%</span>
-                    <span>Carbon Neutral Shipping</span>
+                    <span className="block text-lg font-black text-primary">282+</span>
+                    <span>Verified Sellers</span>
                   </div>
-                  <div className="w-px h-8 bg-border/40" />
+                  <div>
+                    <span className="block text-lg font-black text-primary">4</span>
+                    <span>Countries</span>
+                  </div>
                   <div>
                     <span className="block text-lg font-black text-primary">5-Stage</span>
-                    <span>Supplier Verification Audits</span>
+                    <span>Audit Process</span>
+                  </div>
+                  <div>
+                    <span className="block text-lg font-black text-primary">100%</span>
+                    <span>Carbon-Neutral Shipping</span>
                   </div>
                 </div>
               </div>
@@ -276,80 +457,58 @@ export default function Homepage() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[
-                {
-                  name: "Biodegradable Bamboo Toothbrush",
-                  category: "Zero-Waste Living",
-                  price: "₹149",
-                  image: "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=400",
-                  badge: "98 Eco Score"
-                },
-                {
-                  name: "Organic Raw Cotton Shirt",
-                  category: "Organic Apparel",
-                  price: "₹1,299",
-                  image: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=400",
-                  badge: "92 Eco Score"
-                },
-                {
-                  name: "Solar Powered Utility Lamp",
-                  category: "Renewable Energy",
-                  price: "₹849",
-                  image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800",
-                  badge: "95 Eco Score"
-                },
-                {
-                  name: "Recycled Waste Paper Notebook",
-                  category: "Eco Home Goods",
-                  price: "₹249",
-                  image: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=400",
-                  badge: "88 Eco Score"
-                },
-                {
-                  name: "Zero-Waste Solid Shampoo Bar",
-                  category: "Zero-Waste Living",
-                  price: "₹299",
-                  image: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=400",
-                  badge: "96 Eco Score"
-                },
-                {
-                  name: "Hemp Fiber Laptop Sleeve",
-                  category: "Organic Apparel",
-                  price: "₹949",
-                  image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400",
-                  badge: "91 Eco Score"
-                },
-                {
-                  name: "Upcycled Coconut Shell Bowls (Set of 2)",
-                  category: "Eco Home Goods",
-                  price: "₹399",
-                  image: "https://images.unsplash.com/photo-1533038590840-1cde6b66b706?w=400",
-                  badge: "94 Eco Score"
-                },
-                {
-                  name: "Portable Solar Cooker",
-                  category: "Renewable Energy",
-                  price: "₹4,499",
-                  image: "https://images.unsplash.com/photo-1613665813446-82a78c468a1d?w=400",
-                  badge: "97 Eco Score"
-                }
-              ].map((item, idx) => (
+              {FEATURED_PRODUCTS.map((item) => (
                 <div 
-                  key={idx}
-                  className="group relative bg-card border border-border/40 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_24px_rgba(23,53,40,0.1),0_0_15px_rgba(34,197,94,0.1)] cursor-pointer"
+                  key={item.id}
+                  className="group relative bg-card border border-border/40 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_24px_rgba(23,53,40,0.1),0_0_15px_rgba(34,197,94,0.1)] flex flex-col justify-between"
                 >
-                  <div className="aspect-square relative overflow-hidden bg-muted/20">
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-[8px] font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider">{item.badge}</span>
+                  <div>
+                    <div className="aspect-square relative overflow-hidden bg-muted/20">
+                      <img 
+                        src={item.image} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute top-2 left-2 flex flex-col gap-1.5 items-start">
+                        <span className="bg-[#173528]/95 text-white text-[8px] font-extrabold uppercase px-2 py-0.5 rounded-md tracking-wider shadow-sm">
+                          {item.category}
+                        </span>
+                        <span className="bg-emerald-600 text-white text-[8px] font-extrabold px-2 py-0.5 rounded-md tracking-wider flex items-center gap-0.5 shadow-sm">
+                          <Leaf className="h-2.5 w-2.5 fill-white stroke-none" />
+                          <span>Eco Score: {item.sustainabilityScore}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4 space-y-1.5 text-left">
+                      <p className="text-[9px] font-bold text-accent uppercase tracking-wider">{item.sellerName}</p>
+                      <Link href={`/marketplace`}>
+                        <h4 className="text-xs font-bold text-primary line-clamp-2 group-hover:text-emerald-600 transition-colors cursor-pointer min-h-[32px]">{item.name}</h4>
+                      </Link>
+                      <p className="text-sm font-black text-primary">₹{item.price.toLocaleString()}</p>
+                    </div>
                   </div>
-                  <div className="p-4 space-y-1 text-left">
-                    <p className="text-[9px] font-bold text-accent uppercase tracking-wider">{item.category}</p>
-                    <h4 className="text-xs font-bold text-primary truncate group-hover:text-emerald-600 transition-colors">{item.name}</h4>
-                    <p className="text-xs font-bold text-primary">{item.price}</p>
+                  <div className="px-4 pb-4 pt-0">
+                    <Button 
+                      onClick={() => {
+                        addToCart({
+                          id: item.id,
+                          name: item.name,
+                          price: item.price,
+                          image: item.image,
+                          sustainabilityScore: item.sustainabilityScore,
+                          sellerName: item.sellerName,
+                          sellerId: item.sellerId,
+                        }, 1);
+                        setAddedItemName(item.name);
+                        setTimeout(() => setAddedItemName(null), 2000);
+                      }}
+                      size="sm"
+                      variant="cool"
+                      className="w-full text-[9px] font-bold py-1.5 flex items-center justify-center space-x-1"
+                    >
+                      <ShoppingBag className="h-3 w-3" />
+                      <span>Add to Cart</span>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -357,7 +516,7 @@ export default function Homepage() {
           </div>
 
           {/* WOW Component: Sustainability Intelligence Dashboard */}
-          <div id="verified-sellers" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 md:mt-36 space-y-8">
+          <div id="sustainability-dashboard" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 md:mt-36 space-y-8">
             <div className="text-center md:text-left space-y-2 max-w-xl">
               <Badge variant="primary" className="text-[10px] font-bold uppercase tracking-widest px-3 py-1">Interactive panel</Badge>
               <h2 className="text-3xl font-extrabold text-primary tracking-tight">Sustainability Intelligence</h2>
@@ -593,6 +752,77 @@ export default function Homepage() {
       )
     },
     {
+      id: "verified-sellers",
+      badge: "Sellers",
+      content: (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 md:py-36 space-y-12">
+          <div className="text-center space-y-2 max-w-xl mx-auto">
+            <div className="inline-flex items-center space-x-1.5 rounded-full bg-accent/20 border border-accent/30 px-3 py-1 text-[10px] font-bold text-primary uppercase tracking-wider">
+              <Award className="h-3 w-3 text-emerald-600 animate-pulse" />
+              <span>Direct Verification Badge</span>
+            </div>
+            <h2 className="text-3xl font-extrabold text-primary tracking-tight sm:text-4xl">
+              Verified Ethical Suppliers
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Meet our partner manufacturers and carbon-neutral sellers who have completed our 5-stage certification audits.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pt-4">
+            {SELLERS.map((s, idx) => (
+              <div 
+                key={idx}
+                className="glass-card bg-card border border-border/40 rounded-3xl p-6 flex flex-col justify-between space-y-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+              >
+                <div className="space-y-4 text-left">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm block">🏢</span>
+                      <h3 className="font-extrabold text-base text-primary tracking-tight">{s.name}</h3>
+                    </div>
+                    <Badge variant="premium" className="bg-emerald-600 text-white border-none py-0.5 px-2 text-[9px] font-bold">
+                      Score: {s.score}
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="inline-flex items-center space-x-1 bg-muted/40 rounded-full px-2.5 py-1 text-[10px] text-muted-foreground font-semibold">
+                      <MapPin className="h-3 w-3 text-[#8B5E3C]" />
+                      <span>{s.location}</span>
+                    </span>
+                    <span className="inline-flex items-center space-x-1 bg-muted/40 rounded-full px-2.5 py-1 text-[10px] text-muted-foreground font-semibold">
+                      <span>{s.productCount} Products</span>
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {s.description}
+                  </p>
+                  
+                  <div className="text-[10px] font-bold text-accent uppercase tracking-wider">
+                    Category: <span className="text-primary">{s.category}</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-[#d0c6b8]/20 pt-4 flex items-center justify-between">
+                  <div className="flex items-center space-x-1 text-[10px] text-emerald-700 font-bold">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>Audit Status: Passed</span>
+                  </div>
+                  <Link href={`/marketplace?search=${encodeURIComponent(s.name)}`}>
+                    <Button variant="cool" size="sm" className="text-[10px] py-1.5 px-3">
+                      View Profile
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )
+    },
+    {
       id: "testimonials",
       badge: "Testimonials",
       content: (
@@ -720,6 +950,14 @@ export default function Homepage() {
   ];
 
   return (
-    <ScrollGlobe sections={sections} />
+    <>
+      {addedItemName && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-lg bg-primary text-primary-foreground border border-primary/20 px-4 py-3 shadow-lg flex items-center space-x-2 animate-bounce">
+          <ShoppingBag className="h-4 w-4" />
+          <span className="text-xs font-semibold">Added "{addedItemName}" to Cart!</span>
+        </div>
+      )}
+      <ScrollGlobe sections={sections} />
+    </>
   );
 }

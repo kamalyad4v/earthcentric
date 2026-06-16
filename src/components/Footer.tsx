@@ -17,6 +17,7 @@ export default function Footer() {
     e.preventDefault();
     if (!email) return;
     setSubsubscribed(true);
+    alert("You're subscribed! Thank you for joining the EarthCentric community.");
     setEmail("");
   };
 

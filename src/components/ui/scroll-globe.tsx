@@ -28,8 +28,9 @@ const defaultGlobeConfig = {
     { top: "25%", left: "50%", scale: 0.75 },  // Section 2: Credentials (Center top, compact)
     { top: "22%", left: "85%", scale: 1.7 },   // Section 3: Categories (Right edge, larger)
     { top: "50%", left: "50%", scale: 1.6 },   // Section 4: Verification (Center, backdrop)
-    { top: "35%", left: "20%", scale: 1.25 },  // Section 5: Testimonials (Left side, medium scale)
-    { top: "70%", left: "75%", scale: 1.1 },   // Section 6: Mission / CTA (Right bottom, subtle)
+    { top: "30%", left: "80%", scale: 1.4 },   // Section 5: Verified Sellers (Right side, large)
+    { top: "35%", left: "20%", scale: 1.25 },  // Section 6: Testimonials (Left side, medium scale)
+    { top: "70%", left: "75%", scale: 1.1 },   // Section 7: Mission / CTA (Right bottom, subtle)
   ]
 };
 
