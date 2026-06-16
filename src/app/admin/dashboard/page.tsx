@@ -199,11 +199,11 @@ export default function AdminDashboard() {
 
           <div className="space-y-1">
             <p className="px-6 text-[10px] font-bold text-[#627d6a] uppercase tracking-wider mb-2">Management</p>
-            <SidebarLink icon={ShieldAlert} label="Seller Verification" value="sellers" badge={pendingSellers.length} />
+            <SidebarLink icon={ShieldAlert} label="Seller Verification" value="sellers" />
             <SidebarLink icon={Users} label="User Management" value="users" />
-            <SidebarLink icon={PackageCheck} label="Product Approval" value="products" badge={MOCK_PRODUCTS.length} />
+            <SidebarLink icon={PackageCheck} label="Product Approval" value="products" />
             <SidebarLink icon={ShoppingBag} label="Order Management" value="orders" />
-            <SidebarLink icon={Wallet} label="Payments" value="payments" badge={payoutRequests.filter(r => r.status === 'PENDING').length || 5} />
+            <SidebarLink icon={Wallet} label="Payments" value="payments" />
           </div>
 
           <div className="space-y-1">

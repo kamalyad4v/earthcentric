@@ -1,147 +1,80 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef } from "react";
+import * as THREE from "three";
 
-interface Point3D {
-  x: number;
-  y: number;
-  z: number;
-}
+// Converts Lat/Lng coordinates to a 3D Cartesian vector on a sphere of specified radius
+const convertLatLngToVector3 = (lat: number, lng: number, radius: number) => {
+  const phi = (90 - lat) * (Math.PI / 180);
+  const theta = (lng + 180) * (Math.PI / 180);
+  
+  return new THREE.Vector3(
+    -radius * Math.sin(phi) * Math.sin(theta),
+    radius * Math.cos(phi),
+    radius * Math.sin(phi) * Math.cos(theta)
+  );
+};
 
-// Function to render a high-fidelity flat world map to a hidden canvas
-const drawWorldMap = () => {
-  if (typeof window === "undefined") return null;
-
-  const canvas = document.createElement("canvas");
-  canvas.width = 360;
-  canvas.height = 180;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-
-  // Clear to white (representing water)
-  ctx.fillStyle = "white";
-  ctx.fillRect(0, 0, 360, 180);
-
-  // Draw land in black
-  ctx.fillStyle = "black";
-
-  const mapLonLat = (lon: number, lat: number) => {
-    return [lon + 180, 90 - lat];
-  };
-
-  const drawPolygon = (coords: number[][]) => {
-    ctx.beginPath();
-    coords.forEach((c, idx) => {
-      const [x, y] = mapLonLat(c[0], c[1]);
-      if (idx === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-    ctx.closePath();
-    ctx.fill();
-  };
-
-  // High-fidelity polygon coordinates for Earth's continents
-  const landmasses = [
-    // North America
-    [[-168, 65], [-150, 70], [-120, 75], [-80, 75], [-60, 60], [-55, 48], [-80, 25], [-99, 15], [-105, 20], [-110, 30], [-125, 48], [-125, 60]],
-    // South America
-    [[-80, 12], [-72, 10], [-50, -5], [-35, -6], [-40, -20], [-60, -45], [-72, -55], [-75, -45], [-80, -10], [-82, 0]],
-    // Africa
-    [[-17, 15], [-5, 35], [10, 35], [30, 31], [32, 25], [50, 12], [45, 0], [40, -15], [30, -34], [18, -34], [10, -10], [8, 5]],
-    // Europe & Asia (Eurasia)
-    [[-10, 36], [0, 45], [10, 40], [15, 60], [30, 70], [60, 75], [100, 75], [130, 75], [170, 70], [180, 60], [140, 50], [142, 35], [130, 30], [120, 25], [110, 15], [98, 10], [90, 22], [73, 8], [60, 25], [48, 15], [44, 25], [35, 30], [27, 40]],
-    // India & SE Asia
-    [[68, 24], [72, 10], [80, 6], [90, 22], [97, 8], [105, 10], [108, 1], [100, 6], [85, 20]],
-    // Australia
-    [[113, -22], [130, -12], [136, -12], [143, -20], [153, -28], [150, -35], [140, -38], [115, -35]],
-    // Greenland
-    [[-70, 60], [-60, 75], [-40, 83], [-20, 75], [-30, 60]],
-    // Antarctica
-    [[-180, -75], [180, -75], [180, -90], [-180, -90]],
-    // Madagascar
-    [[43, -12], [50, -15], [47, -25], [43, -25]],
-    // Japan
-    [[130, 30], [135, 35], [142, 40], [140, 45], [135, 38]],
-    // New Zealand
-    [[166, -45], [178, -37], [172, -47]],
-    // Iceland
-    [[-24, 63], [-18, 66], [-13, 65], [-22, 63]],
-    // United Kingdom & Ireland
-    [[-8, 50], [-2, 50], [-2, 58], [-6, 58]]
-  ];
-
-  landmasses.forEach(drawPolygon);
-
-  return ctx.getImageData(0, 0, 360, 180);
+// Draws a dotted line with small circles at the ends on a 2D canvas overlay (HUD connector)
+const drawDottedHUDLine = (
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+) => {
+  ctx.strokeStyle = "rgba(16, 185, 129, 0.45)"; // Soft emerald green
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 3]); // Dotted pattern
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.setLineDash([]); // Reset dash pattern
+  
+  // Draw endpoint node circles
+  ctx.fillStyle = "rgba(16, 185, 129, 0.75)";
+  ctx.beginPath();
+  ctx.arc(x1, y1, 2, 0, 2 * Math.PI);
+  ctx.fill();
 };
 
 export default function Globe({ scrollProgress = 0 }: { scrollProgress?: number }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mountRef = useRef<HTMLDivElement>(null);
+  const hudCanvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Rotation states
-  const rotationX = useRef(0.2);
-  const rotationY = useRef(0);
+  const scrollProgressRef = useRef(scrollProgress);
+  useEffect(() => {
+    scrollProgressRef.current = scrollProgress;
+  }, [scrollProgress]);
+  
+  // References for HTML pins and cards to direct-manipulate style variables for 60fps performance
+  const usaPinRef = useRef<HTMLDivElement>(null);
+  const germanyPinRef = useRef<HTMLDivElement>(null);
+  const indiaPinRef = useRef<HTMLDivElement>(null);
+  const usaCardRef = useRef<HTMLDivElement>(null);
+  const germanyCardRef = useRef<HTMLDivElement>(null);
+  const indiaCardRef = useRef<HTMLDivElement>(null);
+
+  // Rotation values and mouse tracking references
+  const targetRotationX = useRef(0.2);
+  const targetRotationY = useRef(0);
   const isDragging = useRef(false);
   const previousMousePosition = useRef({ x: 0, y: 0 });
 
-  // Generate 3D points representing the landmasses
-  const points = useMemo(() => {
-    const radius = 175;
-    const generated: Point3D[] = [];
-    
-    const imgData = drawWorldMap();
-    if (!imgData) return [];
-
-    const { data } = imgData;
-
-    const latSteps = 100;
-    const lonSteps = 200;
-
-    for (let lat = 0; lat < latSteps; lat++) {
-      const theta = (lat / latSteps) * Math.PI;
-      const y = -radius * Math.cos(theta);
-      const rSphere = radius * Math.sin(theta);
-
-      // Scale longitude steps by circumference to maintain uniform point density
-      const lonCount = Math.round(lonSteps * Math.sin(theta));
-      if (lonCount === 0) continue;
-
-      for (let lon = 0; lon < lonCount; lon++) {
-        const phi = (lon / lonCount) * 2 * Math.PI;
-
-        // Map angles back to flat map indices
-        const xImg = Math.floor((phi / (2 * Math.PI)) * 360) % 360;
-        const yImg = Math.floor((theta / Math.PI) * 180) % 180;
-
-        const pixelIdx = (yImg * 360 + xImg) * 4;
-        const isLand = data[pixelIdx] < 128; // Black pixels are land
-
-        if (isLand) {
-          // Add minor jitter for natural, non-aliased looking shorelines
-          const jitterRadius = radius + (Math.random() - 0.5) * 1.5;
-          const x = jitterRadius * Math.sin(theta) * Math.cos(phi);
-          const z = jitterRadius * Math.sin(theta) * Math.sin(phi);
-          
-          generated.push({ x, y, z });
-        }
-      }
-    }
-    return generated;
-  }, []);
-
-  // Drag interaction
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Drag interaction handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
     isDragging.current = true;
     previousMousePosition.current = { x: e.clientX, y: e.clientY };
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging.current) return;
     const deltaX = e.clientX - previousMousePosition.current.x;
     const deltaY = e.clientY - previousMousePosition.current.y;
     
-    rotationY.current += deltaX * 0.004;
-    rotationX.current = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, rotationX.current + deltaY * 0.004));
+    targetRotationY.current += deltaX * 0.005;
+    targetRotationX.current = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, targetRotationX.current + deltaY * 0.005));
 
     previousMousePosition.current = { x: e.clientX, y: e.clientY };
   };
@@ -151,229 +84,347 @@ export default function Globe({ scrollProgress = 0 }: { scrollProgress?: number 
   };
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const container = mountRef.current;
+    if (!container) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    // 1. Scene setup
+    const scene = new THREE.Scene();
+
+    // 2. Camera setup
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+    camera.position.z = 4.5;
+
+    // 3. WebGL Renderer setup
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(500, 500);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // 4. Earth Group container (allows rotating Earth + Clouds + Pins together)
+    const earthGroup = new THREE.Group();
+    scene.add(earthGroup);
+
+    // 5. Textures loading
+    const textureLoader = new THREE.TextureLoader();
+    
+    // Day marble texture map
+    const dayTexture = textureLoader.load(
+      "https://unpkg.com/three-globe@2.31.1/example/img/earth-day.jpg",
+      () => renderer.render(scene, camera)
+    );
+    // Specular shine map
+    const specularTexture = textureLoader.load(
+      "https://unpkg.com/three-globe@2.31.1/example/img/earth-water.png",
+      () => renderer.render(scene, camera)
+    );
+    // Cloud layer map
+    const cloudsTexture = textureLoader.load(
+      "https://unpkg.com/three-globe@2.31.1/example/img/earth-clouds.png",
+      () => renderer.render(scene, camera)
+    );
+
+    // 6. Earth Mesh setup (radius 1.6, 64 segments)
+    const earthGeo = new THREE.SphereGeometry(1.6, 64, 64);
+    const earthMat = new THREE.MeshPhongMaterial({
+      map: dayTexture,
+      specularMap: specularTexture,
+      shininess: 18,
+      specular: new THREE.Color(0x4488aa),
+    });
+    const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+    earthGroup.add(earthMesh);
+
+    // 7. Cloud Layer Mesh setup (radius 1.615, slightly larger)
+    const cloudsGeo = new THREE.SphereGeometry(1.615, 64, 64);
+    const cloudsMat = new THREE.MeshPhongMaterial({
+      map: cloudsTexture,
+      transparent: true,
+      opacity: 0.28,
+      blending: THREE.NormalBlending
+    });
+    const cloudsMesh = new THREE.Mesh(cloudsGeo, cloudsMat);
+    earthGroup.add(cloudsMesh);
+
+    // 8. Thin Atmosphere Limb Glow (radius 1.66)
+    const glowGeo = new THREE.SphereGeometry(1.66, 64, 64);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0x4fc3f7,
+      side: THREE.BackSide,
+      transparent: true,
+      opacity: 0.08
+    });
+    const glowMesh = new THREE.Mesh(glowGeo, glowMat);
+    scene.add(glowMesh);
+
+    // 9. Cinematic Lighting setup
+    // DirectionalLight (Simulated sunlight)
+    const sunLight = new THREE.DirectionalLight(0xfff4e0, 2.2);
+    sunLight.position.set(5, 3, 5);
+    scene.add(sunLight);
+
+    // Cool backfill light (Simulated dark side reflection)
+    const fillLight = new THREE.DirectionalLight(0x6699cc, 0.4);
+    fillLight.position.set(-4, 0, -2);
+    scene.add(fillLight);
+
+    // Ambient light (Shadow floor lifter)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
+    scene.add(ambientLight);
+
+    // 10. Spherical Coordinates for verified country pins
+    const pins = {
+      usa: convertLatLngToVector3(38, -97, 1.6),
+      germany: convertLatLngToVector3(51, 10, 1.6),
+      india: convertLatLngToVector3(20, 78, 1.6)
+    };
+
+    // HUD 2D Canvas configuration
+    const hudCanvas = hudCanvasRef.current;
+    const hudCtx = hudCanvas?.getContext("2d");
 
     let animationId: number;
 
-    const render = () => {
+    const renderLoop = () => {
+      // Slow auto-rotation on Y axis when not active dragging
       if (!isDragging.current) {
-        rotationY.current += 0.0018; // Auto-rotate
+        targetRotationY.current += 0.0022;
       }
 
-      const width = canvas.width;
-      const height = canvas.height;
-      const cx = width / 2;
-      const cy = height / 2;
-      const radius = 175;
+      // Smooth interpolation for dragging + scroll coordinate rotation offset
+      const scrollRotation = scrollProgressRef.current * Math.PI * 2.2;
+      earthGroup.rotation.y += (targetRotationY.current + scrollRotation - earthGroup.rotation.y) * 0.08;
+      earthGroup.rotation.x += (targetRotationX.current - earthGroup.rotation.x) * 0.08;
 
-      ctx.clearRect(0, 0, width, height);
+      // Rotate clouds slightly faster for dynamic feel
+      cloudsMesh.rotation.y += 0.0003;
 
-      // Check if light or dark theme is active
-      const isDark = document.documentElement.classList.contains("dark");
+      // WebGL Frame Render
+      renderer.render(scene, camera);
 
-      // 1. Draw Outer Atmospheric Aura Glow
-      const glow = ctx.createRadialGradient(cx, cy, radius * 0.7, cx, cy, radius * 1.35);
-      glow.addColorStop(0, isDark ? "rgba(163, 177, 138, 0.2)" : "rgba(163, 177, 138, 0.25)");
-      glow.addColorStop(0.6, isDark ? "rgba(79, 110, 138, 0.08)" : "rgba(110, 160, 180, 0.12)");
-      glow.addColorStop(1, "rgba(163, 177, 138, 0)");
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius * 1.35, 0, 2 * Math.PI);
-      ctx.fill();
+      // HUD overlay vectors drawing
+      if (hudCanvas && hudCtx) {
+        hudCtx.clearRect(0, 0, 500, 500);
 
-      // Cosine/Sine values
-      const cosX = Math.cos(rotationX.current);
-      const sinX = Math.sin(rotationX.current);
-      
-      const currentScrollRotation = scrollProgress * Math.PI * 2.2;
-      const cosY = Math.cos(rotationY.current + currentScrollRotation);
-      const sinY = Math.sin(rotationY.current + currentScrollRotation);
+        const cx = 250;
+        const cy = 250;
+        const screenRadius = 185;
 
-      // Project all points and split into back vs front lists based on Z coordinate
-      const projected = points.map((p) => {
-        const x1 = p.x * cosY - p.z * sinY;
-        const z1 = p.z * cosY + p.x * sinY;
+        // Draw HUD tech circle
+        hudCtx.strokeStyle = "rgba(79, 195, 247, 0.12)";
+        hudCtx.lineWidth = 1;
+        hudCtx.beginPath();
+        hudCtx.arc(cx, cy, screenRadius * 1.15, 0, 2 * Math.PI);
+        hudCtx.stroke();
 
-        const y2 = p.y * cosX - z1 * sinX;
-        const z2 = z1 * cosX + p.y * sinX;
+        // Draw rotating scanner tick
+        const tickAngle = (Date.now() * 0.00035) % (Math.PI * 2);
+        hudCtx.strokeStyle = "rgba(79, 195, 247, 0.4)";
+        hudCtx.lineWidth = 2.5;
+        hudCtx.beginPath();
+        hudCtx.arc(cx, cy, screenRadius * 1.15, tickAngle, tickAngle + 0.18);
+        hudCtx.stroke();
 
-        const distance = 450;
-        const scale = distance / (distance + z2);
-        const px = cx + x1 * scale;
-        const py = cy + y2 * scale;
+        // Draw HUD status display text
+        hudCtx.fillStyle = "rgba(79, 195, 247, 0.45)";
+        hudCtx.font = "bold 7px monospace";
+        hudCtx.fillText("TELEMETRY: ONLINE", cx - 40, cy - screenRadius * 1.25);
+        hudCtx.fillText("NODE TRACKER ACTIVE", cx - 44, cy + screenRadius * 1.28);
 
-        return { x: px, y: py, z: z2, scale };
-      });
+        // Fixed screen anchor coordinates for matching absolute HTML labels
+        const labelPositions = {
+          usa: { x: 92, y: 135 },       // Left side label target
+          germany: { x: 388, y: 75 },   // Right side top label target
+          india: { x: 388, y: 395 }    // Right side bottom label target
+        };
 
-      const backPoints = projected.filter((p) => p.z > 0).sort((a, b) => b.z - a.z);
-      const frontPoints = projected.filter((p) => p.z <= 0).sort((a, b) => b.z - a.z);
+        // Projects a 3D pin vector onto the 2D canvas surface and detects backface occlusion
+        const projectPin = (pinVec: THREE.Vector3) => {
+          const tempV = pinVec.clone();
+          tempV.applyQuaternion(earthGroup.quaternion);
 
-      // 2. Draw Back-Side Landmass Dots (faint/blended)
-      backPoints.forEach((p) => {
-        const depth = (p.z + radius) / (2 * radius); // 0.5 to 1
-        const opacity = Math.max(0.05, 0.35 - depth * 0.3);
-        ctx.fillStyle = isDark
-          ? `rgba(163, 177, 138, ${opacity})`
-          : `rgba(90, 110, 95, ${opacity})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.scale * 1.2, 0, 2 * Math.PI);
-        ctx.fill();
-      });
+          // Facing front if Z coordinate is positive (closest to camera in z axis)
+          const isFront = tempV.z > 0;
 
-      // 3. Draw 3D Ocean Sphere (covers back dots, sits beneath front dots)
-      const ocean = ctx.createRadialGradient(cx, cy, radius * 0.4, cx, cy, radius);
-      if (isDark) {
-        ocean.addColorStop(0, "rgba(22, 34, 46, 0.95)"); // Deep ocean blue
-        ocean.addColorStop(0.85, "rgba(18, 28, 38, 0.9)");
-        ocean.addColorStop(1, "rgba(163, 177, 138, 0.15)"); // Blends into atmosphere
-      } else {
-        ocean.addColorStop(0, "rgba(215, 230, 240, 0.92)"); // Premium ice blue ocean
-        ocean.addColorStop(0.85, "rgba(195, 218, 230, 0.9)");
-        ocean.addColorStop(1, "rgba(163, 177, 138, 0.2)");
-      }
-      ctx.fillStyle = ocean;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
-      ctx.fill();
+          tempV.project(camera);
+          const px = (tempV.x * 0.5 + 0.5) * 500;
+          const py = (tempV.y * -0.5 + 0.5) * 500;
 
-      // 4. Draw Rotating Coordinate Grid Lines (Front Side)
-      ctx.strokeStyle = isDark
-        ? "rgba(163, 177, 138, 0.08)"
-        : "rgba(31, 58, 46, 0.05)";
-      ctx.lineWidth = 1;
+          return { x: px, y: py, isFront };
+        };
 
-      // Latitude lines
-      for (let lat = -4; lat <= 4; lat++) {
-        const h = radius * (lat / 5);
-        const r = Math.sqrt(radius * radius - h * h);
-        
-        ctx.beginPath();
-        let activePath = false;
-        for (let i = 0; i <= 60; i++) {
-          const phi = (i / 60) * 2 * Math.PI;
-          const x = r * Math.cos(phi);
-          const z = r * Math.sin(phi);
-
-          const x1 = x * cosY - z * sinY;
-          const z1 = z * cosY + x * sinY;
-          const y2 = h * cosX - z1 * sinX;
-          const z2 = z1 * cosX + h * sinX;
-
-          if (z2 <= 0) { // Only front coordinates
-            const scale = 450 / (450 + z2);
-            const px = cx + x1 * scale;
-            const py = cy + y2 * scale;
-            if (!activePath) {
-              ctx.moveTo(px, py);
-              activePath = true;
-            } else {
-              ctx.lineTo(px, py);
-            }
+        // Project and connect USA Pin
+        const pUsa = projectPin(pins.usa);
+        if (usaPinRef.current && usaCardRef.current) {
+          if (pUsa.isFront) {
+            usaPinRef.current.style.display = "block";
+            usaPinRef.current.style.transform = `translate3d(${pUsa.x}px, ${pUsa.y}px, 0) translate3d(-50%, -50%, 0)`;
+            usaCardRef.current.style.opacity = "1";
+            drawDottedHUDLine(hudCtx, pUsa.x, pUsa.y, labelPositions.usa.x, labelPositions.usa.y);
           } else {
-            activePath = false;
+            usaPinRef.current.style.display = "none";
+            usaCardRef.current.style.opacity = "0.35";
           }
         }
-        ctx.stroke();
-      }
 
-      // 5. Draw Front-Side Landmass Dots (crisp, layered, glowing)
-      frontPoints.forEach((p) => {
-        // depth ranges from 0 (closest to viewer) to 0.5 (equator edges)
-        const depth = (p.z + radius) / (2 * radius);
-        const intensity = 1 - (depth * 2); // 1 to 0
-        const opacity = 0.4 + intensity * 0.6;
-        const size = Math.max(1.2, p.scale * (2.0 + intensity * 0.8));
-
-        // Use standard earth green tones
-        ctx.fillStyle = `rgba(163, 177, 138, ${opacity})`; // Sage Green
-        if (intensity > 0.45) {
-          ctx.fillStyle = `rgba(31, 58, 46, ${opacity})`; // Deep Forest Green highlight
+        // Project and connect Germany Pin
+        const pGer = projectPin(pins.germany);
+        if (germanyPinRef.current && germanyCardRef.current) {
+          if (pGer.isFront) {
+            germanyPinRef.current.style.display = "block";
+            germanyPinRef.current.style.transform = `translate3d(${pGer.x}px, ${pGer.y}px, 0) translate3d(-50%, -50%, 0)`;
+            germanyCardRef.current.style.opacity = "1";
+            drawDottedHUDLine(hudCtx, pGer.x, pGer.y, labelPositions.germany.x, labelPositions.germany.y);
+          } else {
+            germanyPinRef.current.style.display = "none";
+            germanyCardRef.current.style.opacity = "0.35";
+          }
         }
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, size, 0, 2 * Math.PI);
-        ctx.fill();
-      });
+        // Project and connect India Pin
+        const pInd = projectPin(pins.india);
+        if (indiaPinRef.current && indiaCardRef.current) {
+          if (pInd.isFront) {
+            indiaPinRef.current.style.display = "block";
+            indiaPinRef.current.style.transform = `translate3d(${pInd.x}px, ${pInd.y}px, 0) translate3d(-50%, -50%, 0)`;
+            indiaCardRef.current.style.opacity = "1";
+            drawDottedHUDLine(hudCtx, pInd.x, pInd.y, labelPositions.india.x, labelPositions.india.y);
+          } else {
+            indiaPinRef.current.style.display = "none";
+            indiaCardRef.current.style.opacity = "0.35";
+          }
+        }
+      }
 
-      // 6. Atmosphere Rim Highlight
-      ctx.strokeStyle = isDark
-        ? "rgba(163, 177, 138, 0.2)"
-        : "rgba(163, 177, 138, 0.3)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
-      ctx.stroke();
-
-      animationId = requestAnimationFrame(render);
+      animationId = requestAnimationFrame(renderLoop);
     };
 
-    render();
+    renderLoop();
 
+    // Clean mount connections on component destruction
     return () => {
       cancelAnimationFrame(animationId);
+      container.removeChild(renderer.domElement);
+      renderer.dispose();
     };
-  }, [points]);
+  }, []);
 
   return (
-    <div className="relative cursor-grab active:cursor-grabbing select-none w-[500px] h-[500px] flex items-center justify-center">
-      <canvas
-        ref={canvasRef}
-        width={500}
-        height={500}
-        className="w-full h-full max-w-[500px] max-h-[500px]"
+    <div className="relative w-[500px] h-[500px] flex items-center justify-center select-none">
+      
+      {/* Self-contained CSS keys inject for Antigravity & Pulse Animations */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes antigravity {
+          0%   { transform: translateY(0px) rotate3d(1, 0, 0, 0deg); }
+          25%  { transform: translateY(-18px) rotate3d(1, 0, 0, 1.5deg); }
+          50%  { transform: translateY(-28px) rotate3d(1, 0, 0, 0deg); }
+          75%  { transform: translateY(-14px) rotate3d(1, 0, 0, -1deg); }
+          100% { transform: translateY(0px) rotate3d(1, 0, 0, 0deg); }
+        }
+        @keyframes shadow-pulse {
+          0%, 100% { transform: translateX(-50%) scaleX(1);   opacity: 0.18; }
+          50%       { transform: translateX(-50%) scaleX(0.7); opacity: 0.08; }
+        }
+        .animate-antigravity {
+          animation: antigravity 7s ease-in-out infinite;
+        }
+        .animate-shadow-pulse {
+          animation: shadow-pulse 7s ease-in-out infinite;
+        }
+      `}} />
+
+      {/* 4. Shadow Pulse Ellipse underneath the floating globe container */}
+      <div 
+        className="absolute bottom-[-5px] left-1/2 w-44 h-4 bg-[#0a2a1a] rounded-full filter blur-[18px] pointer-events-none animate-shadow-pulse"
+        style={{ transformOrigin: "center center" }}
+      />
+
+      {/* Floating interactive wrapper div */}
+      <div 
+        className="relative w-full h-full flex items-center justify-center animate-antigravity cursor-grab active:cursor-grabbing z-20"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-      />
+      >
+        
+        {/* Three.js canvas mount wrapper */}
+        <div ref={mountRef} className="w-[500px] h-[500px]" />
 
-      {/* USA Label */}
-      <div className="absolute top-[22%] left-[-4%] flex items-center space-x-1.5 z-20">
-        <div className="glass-panel rounded-xl p-2 text-[9px] pointer-events-none shadow-md">
-          <div className="flex items-center space-x-1 font-bold text-foreground">
-            <span>🇺🇸</span>
-            <span>USA</span>
-          </div>
-          <p className="text-[8px] text-muted-foreground font-semibold">102 Eco Manufacturers</p>
-        </div>
-        <div className="h-px w-4 bg-border/40" />
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 relative flex items-center justify-center">
+        {/* 5. 2D HUD Canvas overlay */}
+        <canvas
+          ref={hudCanvasRef}
+          width={500}
+          height={500}
+          className="absolute inset-0 pointer-events-none z-10 w-[500px] h-[500px]"
+        />
+
+        {/* HTML overlay pins */}
+        <div 
+          ref={usaPinRef}
+          className="absolute top-0 left-0 w-2.5 h-2.5 rounded-full bg-emerald-500 pointer-events-none z-30"
+          style={{ display: "none" }}
+        >
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
         </div>
-      </div>
 
-      {/* Germany Label */}
-      <div className="absolute top-[10%] right-[-2%] flex items-center space-x-1.5 z-20">
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 relative flex items-center justify-center">
+        <div 
+          ref={germanyPinRef}
+          className="absolute top-0 left-0 w-2.5 h-2.5 rounded-full bg-emerald-500 pointer-events-none z-30"
+          style={{ display: "none" }}
+        >
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
         </div>
-        <div className="h-px w-4 bg-border/40" />
-        <div className="glass-panel rounded-xl p-2 text-[9px] pointer-events-none shadow-md">
-          <div className="flex items-center space-x-1 font-bold text-foreground">
-            <span>🇩🇪</span>
-            <span>Germany</span>
-          </div>
-          <p className="text-[8px] text-muted-foreground font-semibold">48 Carbon Neutral Brands</p>
-        </div>
-      </div>
 
-      {/* India Label */}
-      <div className="absolute bottom-[20%] right-[-2%] flex items-center space-x-1.5 z-20">
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 relative flex items-center justify-center">
+        <div 
+          ref={indiaPinRef}
+          className="absolute top-0 left-0 w-2.5 h-2.5 rounded-full bg-emerald-500 pointer-events-none z-30"
+          style={{ display: "none" }}
+        >
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
         </div>
-        <div className="h-px w-4 bg-border/40" />
-        <div className="glass-panel rounded-xl p-2 text-[9px] pointer-events-none shadow-md">
-          <div className="flex items-center space-x-1 font-bold text-foreground">
-            <span>🇮🇳</span>
-            <span>India</span>
+
+        {/* Floating country info card - USA */}
+        <div 
+          ref={usaCardRef}
+          className="absolute top-[22%] left-[-4%] flex items-center space-x-1.5 z-20 transition-opacity duration-300"
+        >
+          <div className="glass-panel rounded-xl p-2 text-[9px] pointer-events-none shadow-md">
+            <div className="flex items-center space-x-1 font-bold text-foreground">
+              <span>🇺🇸</span>
+              <span>USA</span>
+            </div>
+            <p className="text-[8px] text-muted-foreground font-semibold">102 Eco Manufacturers</p>
           </div>
-          <p className="text-[8px] text-muted-foreground font-semibold">132 Verified Sellers</p>
         </div>
+
+        {/* Floating country info card - Germany */}
+        <div 
+          ref={germanyCardRef}
+          className="absolute top-[10%] right-[-2%] flex items-center space-x-1.5 z-20 transition-opacity duration-300"
+        >
+          <div className="glass-panel rounded-xl p-2 text-[9px] pointer-events-none shadow-md">
+            <div className="flex items-center space-x-1 font-bold text-foreground">
+              <span>🇩🇪</span>
+              <span>Germany</span>
+            </div>
+            <p className="text-[8px] text-muted-foreground font-semibold">48 Carbon Neutral Brands</p>
+          </div>
+        </div>
+
+        {/* Floating country info card - India */}
+        <div 
+          ref={indiaCardRef}
+          className="absolute bottom-[20%] right-[-2%] flex items-center space-x-1.5 z-20 transition-opacity duration-300"
+        >
+          <div className="glass-panel rounded-xl p-2 text-[9px] pointer-events-none shadow-md">
+            <div className="flex items-center space-x-1 font-bold text-foreground">
+              <span>🇮🇳</span>
+              <span>India</span>
+            </div>
+            <p className="text-[8px] text-muted-foreground font-semibold">132 Verified Sellers</p>
+          </div>
+        </div>
+
       </div>
     </div>
   );
