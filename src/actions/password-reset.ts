@@ -118,3 +118,41 @@ export async function resendPasswordResetOTP(email: string): Promise<{
 }> {
   return requestPasswordReset(email);
 }
+
+// ─── Reset Password ────────────────────────────────────────────────
+export async function resetPassword(
+  email: string,
+  newPassword: string
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  if (!email || !newPassword) {
+    return { success: false, error: "Email and new password are required." };
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  try {
+    if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes("mock")) {
+      const user = await db.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+
+      if (!user) {
+        return { success: false, error: "User not found." };
+      }
+
+      await db.user.update({
+        where: { email: normalizedEmail },
+        data: { password: newPassword }
+      });
+    }
+
+    console.log(`[Password Reset] Password reset successfully for ${normalizedEmail}`);
+    return { success: true };
+  } catch (e: any) {
+    console.error("Password reset failed:", e);
+    return { success: false, error: "Failed to reset password. Please try again." };
+  }
+}

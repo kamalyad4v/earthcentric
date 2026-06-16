@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useRef } from "react";
-import { requestPasswordReset, verifyPasswordResetOTP, resendPasswordResetOTP } from "@/actions/password-reset";
+import { requestPasswordReset, verifyPasswordResetOTP, resendPasswordResetOTP, resetPassword } from "@/actions/password-reset";
 
 interface OTPVerificationProps {
   defaultEmail?: string;
@@ -12,7 +12,9 @@ export function OTPVerification({ defaultEmail }: OTPVerificationProps) {
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState(defaultEmail || "");
-  const [step, setStep] = useState<"email" | "otp" | "success">("email");
+  const [step, setStep] = useState<"email" | "otp" | "reset" | "success">("email");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -79,11 +81,39 @@ export function OTPVerification({ defaultEmail }: OTPVerificationProps) {
 
     setIsLoading(false);
     if (result.success) {
-      setStep("success");
+      setStep("reset");
     } else {
       setError(result.error || "Verification failed.");
       setOtp(["", "", "", ""]);
       inputRefs.current[0]?.focus();
+    }
+  };
+
+  // Step 3: Reset Password
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || !confirmPassword) return;
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    const result = await resetPassword(email, newPassword);
+
+    setIsLoading(false);
+    if (result.success) {
+      setStep("success");
+    } else {
+      setError(result.error || "Failed to reset password. Please try again.");
     }
   };
 
@@ -246,6 +276,61 @@ export function OTPVerification({ defaultEmail }: OTPVerificationProps) {
                   ← Use a different email
                 </button>
               </div>
+            </>
+          )}
+
+          {/* Step: Enter new password */}
+          {step === "reset" && (
+            <>
+              <div className="text-center mb-8">
+                <div className="w-8 h-8 mx-auto mb-6 text-white">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                  </svg>
+                </div>
+                <h1 className="text-2xl font-semibold text-white mb-3">Set new password</h1>
+                <p className="text-white/70 text-sm leading-relaxed">
+                  Enter your new password below to reset.
+                </p>
+              </div>
+
+              <form onSubmit={handleResetSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <input
+                    type="password"
+                    placeholder="New Password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/40 focus:outline-none transition-all duration-200 h-12 rounded-2xl px-4 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <input
+                    type="password"
+                    placeholder="Confirm New Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="w-full bg-white/10 border border-white/20 text-white placeholder-white/40 focus:bg-white/15 focus:border-white/40 focus:outline-none transition-all duration-200 h-12 rounded-2xl px-4 text-sm"
+                  />
+                </div>
+
+                {error && (
+                  <p className="text-red-300 text-xs text-center bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isLoading || !newPassword || !confirmPassword}
+                  className="w-full bg-white text-emerald-900 font-bold py-3 rounded-2xl shadow-lg hover:bg-white/90 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all duration-200 cursor-pointer"
+                >
+                  {isLoading ? "Updating password..." : "Update Password"}
+                </button>
+              </form>
             </>
           )}
 
