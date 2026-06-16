@@ -197,7 +197,7 @@ export default function ScrollGlobe({ sections, globeConfig = defaultGlobeConfig
         }}
       >
         <div className="md:scale-90 lg:scale-100 opacity-90">
-          <Globe />
+          <Globe scrollProgress={scrollProgress} />
         </div>
       </div>
 

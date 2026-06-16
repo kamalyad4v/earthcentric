@@ -1,12 +1,11 @@
 
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button, Card, Badge, LiquidButton, MetalButton } from "@/components/ui/shared";
 import { FadeIn, FadeInStagger, FadeInStaggerItem, ScaleHover } from "@/components/FramerComponents";
-import { ContainerScroll } from "@/components/ui/container-scroll-animation";
-import { ShieldCheck, Award, Leaf, ArrowRight, ArrowUpRight, Zap, RefreshCw, Heart } from "lucide-react";
+import { ShieldCheck, Award, Leaf, ArrowRight, ArrowUpRight, RefreshCw, ChevronRight } from "lucide-react";
 import DisplayCards from "@/components/ui/display-cards";
 import ScrollGlobe from "@/components/ui/scroll-globe";
 
@@ -68,53 +67,330 @@ const highlightsCards = [
   },
 ];
 
+const SUSTAINABILITY_DATA = [
+  {
+    id: "cotton-shirt",
+    name: "Organic Raw Cotton Shirt",
+    carbon: "-73%",
+    water: "-420 Liters",
+    score: "92/100",
+    certs: ["GOTS Organic", "Fair Trade Certified"],
+    desc: "Made from natural rain-fed organic cotton fibers. Zero harmful synthetic pesticides were used, saving soil health and native river basins.",
+    color: "text-emerald-600"
+  },
+  {
+    id: "bamboo-brush",
+    name: "Biodegradable Bamboo Toothbrush",
+    carbon: "-95%",
+    water: "-150 Liters",
+    score: "98/100",
+    certs: ["USDA Biobased", "FSC Certified Wood"],
+    desc: "Wild harvested Moso bamboo handle that breaks down completely in residential backyard compost heaps within six months.",
+    color: "text-emerald-600"
+  },
+  {
+    id: "solar-lamp",
+    name: "Solar Powered Utility Lamp",
+    carbon: "-82%",
+    water: "-80 Liters",
+    score: "95/100",
+    certs: ["RoHS Compliant", "CE Certified"],
+    desc: "Monocrystalline cells paired with dynamic lithium iron phosphate batteries to enable grid-independent lighting for over 10 years.",
+    color: "text-emerald-600"
+  },
+  {
+    id: "notebook",
+    name: "Recycled Waste Paper Notebook",
+    carbon: "-68%",
+    water: "-350 Liters",
+    score: "88/100",
+    certs: ["FSC Recycled", "Chlorine-Free Process"],
+    desc: "Repurposed from post-consumer office refuse using soy-based natural printing inks and zero toxic bleaching chemical agents.",
+    color: "text-emerald-600"
+  }
+];
+
+function AnimatedCounter({ value, isDecimal = false, suffix = "" }: { value: number; isDecimal?: boolean; suffix?: string }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const duration = 1500;
+    const steps = 60;
+    const stepTime = duration / steps;
+    let currentStep = 0;
+
+    const timer = setInterval(() => {
+      currentStep++;
+      const progress = currentStep / steps;
+      const currentVal = progress * value;
+      
+      if (currentStep >= steps) {
+        clearInterval(timer);
+        setCount(value);
+      } else {
+        setCount(isDecimal ? parseFloat(currentVal.toFixed(1)) : Math.floor(currentVal));
+      }
+    }, stepTime);
+
+    return () => clearInterval(timer);
+  }, [value, isDecimal]);
+
+  return <span className="tabular-nums">{isDecimal ? count.toFixed(1) : count.toLocaleString()}{suffix}</span>;
+}
+
 export default function Homepage() {
+  const [selectedWowProduct, setSelectedWowProduct] = useState(SUSTAINABILITY_DATA[0]);
+
   const sections = [
     {
       id: "hero",
       badge: "Home",
       content: (
-        <section className="relative overflow-hidden bg-gradient-to-b from-accent/10 to-transparent py-12 md:py-20">
-          <ContainerScroll
-            titleComponent={
-              <div className="space-y-6">
-                <div className="inline-flex items-center space-x-1.5 rounded-full bg-accent/20 border border-accent/30 px-3 py-1 text-xs font-semibold text-primary">
-                  <Award className="h-3.5 w-3.5" />
-                  <span>The Premier Ethical Marketplace</span>
+        <section className="relative overflow-hidden bg-gradient-to-b from-accent/10 to-transparent pt-12 pb-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center min-h-[60vh]">
+              
+              {/* Left Column: Heavy typography, CTAs, & summary */}
+              <div className="md:col-span-7 space-y-8 text-left z-20">
+                <div className="inline-flex items-center space-x-2 rounded-full glass-badge px-4 py-1.5 text-xs font-semibold text-primary shadow-sm w-fit">
+                  <Award className="h-4 w-4 text-emerald-600 animate-pulse" />
+                  <span>Premier Ethical Marketplace</span>
                 </div>
 
-                <h1 className="text-3xl font-extrabold tracking-tight sm:text-6xl text-primary leading-tight">
-                  Sustainable Products. <br />
-                  <span className="text-secondary">Verified Suppliers.</span> Trusted Marketplace.
+                <h1 className="text-4xl sm:text-6xl lg:text-[72px] font-extrabold tracking-tight text-primary leading-[0.95] -letter-spacing-[0.04em] uppercase">
+                  Every Product Verified. <br />
+                  <span className="text-emerald-600">Every Purchase</span> Measurable.
                 </h1>
 
-                <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                <p className="text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed">
                   EarthCentric connects conscious buyers with verified sustainable businesses, manufacturers, and carbon-neutral suppliers.
                 </p>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                  <Link href="/marketplace">
-                    <LiquidButton size="lg" className="w-full sm:w-auto flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
+                  <Link href="/marketplace" className="w-full sm:w-auto">
+                    <LiquidButton size="lg" className="w-full sm:w-auto flex items-center justify-center space-x-2">
                       <span>Explore Marketplace</span>
                       <ArrowRight className="h-4 w-4" />
                     </LiquidButton>
                   </Link>
-                  <Link href="/seller/verification">
-                    <Button size="lg" variant="cool" className="w-full sm:w-auto">
+                  <Link href="/seller/verification" className="w-full sm:w-auto">
+                    <Button size="lg" variant="cool" className="w-full sm:w-auto justify-center">
                       Become a Seller
                     </Button>
                   </Link>
                 </div>
+
+                <div className="pt-6 border-t border-[#d0c6b8]/30 max-w-lg flex items-center space-x-8 text-xs text-muted-foreground font-semibold">
+                  <div>
+                    <span className="block text-lg font-black text-primary">100%</span>
+                    <span>Carbon Neutral Shipping</span>
+                  </div>
+                  <div className="w-px h-8 bg-border/40" />
+                  <div>
+                    <span className="block text-lg font-black text-primary">5-Stage</span>
+                    <span>Supplier Verification Audits</span>
+                  </div>
+                </div>
               </div>
-            }
-          >
-            <img
-              src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1400&auto=format&fit=crop&q=80"
-              alt="EarthCentric Marketplace Preview"
-              className="mx-auto rounded-2xl object-cover h-full w-full object-center"
-              draggable={false}
-            />
-          </ContainerScroll>
+
+              {/* Right Column: Empty spacer for Globe overlays */}
+              <div className="md:col-span-5 h-[350px] md:h-[500px] pointer-events-none relative" />
+            </div>
+          </div>
+
+          {/* Live Impact Metrics Bar */}
+          <div id="impact-tracker" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 md:mt-24">
+            <div className="glass-panel rounded-3xl p-8 grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 relative overflow-hidden border border-[#d0c6b8]/50 dark:border-[#243b2e]/50 text-center">
+              <div className="space-y-1">
+                <span className="text-3xl block mb-2">🌳</span>
+                <div className="text-3xl md:text-4xl font-extrabold text-primary">
+                  <AnimatedCounter value={45234} />
+                </div>
+                <p className="text-[10px] font-bold text-[#6a7b6e] uppercase tracking-wider">Trees Saved</p>
+                <p className="text-[9px] text-muted-foreground">Reforestation initiatives funded</p>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-3xl block mb-2">♻️</span>
+                <div className="text-3xl md:text-4xl font-extrabold text-primary">
+                  <AnimatedCounter value={12.4} isDecimal suffix=" Tons" />
+                </div>
+                <p className="text-[10px] font-bold text-[#6a7b6e] uppercase tracking-wider">Plastic Reduced</p>
+                <p className="text-[9px] text-muted-foreground">Single-use plastics avoided</p>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-3xl block mb-2">💧</span>
+                <div className="text-3xl md:text-4xl font-extrabold text-primary">
+                  <AnimatedCounter value={1.8} isDecimal suffix="M Liters" />
+                </div>
+                <p className="text-[10px] font-bold text-[#6a7b6e] uppercase tracking-wider">Water Conserved</p>
+                <p className="text-[9px] text-muted-foreground">Sustainable agriculture metrics</p>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-3xl block mb-2">🌎</span>
+                <div className="text-3xl md:text-4xl font-extrabold text-primary">
+                  <AnimatedCounter value={58} suffix=" Tons" />
+                </div>
+                <p className="text-[10px] font-bold text-[#6a7b6e] uppercase tracking-wider">Carbon Offset</p>
+                <p className="text-[9px] text-muted-foreground">Verified cargo footprint offsets</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Floating Product Showcase Preview */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 md:mt-36 space-y-8">
+            <div className="text-center md:text-left space-y-2 max-w-xl">
+              <div className="inline-flex items-center space-x-1.5 rounded-full bg-accent/20 border border-accent/30 px-3 py-1 text-[10px] font-bold text-primary uppercase tracking-wider">
+                <span>Featured Catalog Preview</span>
+              </div>
+              <h2 className="text-3xl font-extrabold text-primary tracking-tight">Eco Essentials</h2>
+              <p className="text-sm text-muted-foreground">Handpicked items from verified manufacturers featuring lifetime carbon offsetting.</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                {
+                  name: "Biodegradable Bamboo Toothbrush",
+                  category: "Zero-Waste Living",
+                  price: "₹149",
+                  image: "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=400",
+                  badge: "98 Eco Score"
+                },
+                {
+                  name: "Organic Raw Cotton Shirt",
+                  category: "Organic Apparel",
+                  price: "₹1,299",
+                  image: "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=400",
+                  badge: "92 Eco Score"
+                },
+                {
+                  name: "Solar Powered Utility Lamp",
+                  category: "Renewable Energy",
+                  price: "₹849",
+                  image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800",
+                  badge: "95 Eco Score"
+                },
+                {
+                  name: "Recycled Waste Paper Notebook",
+                  category: "Eco Home Goods",
+                  price: "₹249",
+                  image: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=400",
+                  badge: "88 Eco Score"
+                }
+              ].map((item, idx) => (
+                <div 
+                  key={idx}
+                  className="group relative bg-card border border-border/40 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_24px_rgba(23,53,40,0.1),0_0_15px_rgba(34,197,94,0.1)] cursor-pointer"
+                >
+                  <div className="aspect-square relative overflow-hidden bg-muted/20">
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-[8px] font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider">{item.badge}</span>
+                  </div>
+                  <div className="p-4 space-y-1 text-left">
+                    <p className="text-[9px] font-bold text-accent uppercase tracking-wider">{item.category}</p>
+                    <h4 className="text-xs font-bold text-primary truncate group-hover:text-emerald-600 transition-colors">{item.name}</h4>
+                    <p className="text-xs font-bold text-primary">{item.price}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* WOW Component: Sustainability Intelligence Dashboard */}
+          <div id="verified-sellers" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-20 md:mt-36 space-y-8">
+            <div className="text-center md:text-left space-y-2 max-w-xl">
+              <Badge variant="primary" className="text-[10px] font-bold uppercase tracking-widest px-3 py-1">Interactive panel</Badge>
+              <h2 className="text-3xl font-extrabold text-primary tracking-tight">Sustainability Intelligence</h2>
+              <p className="text-sm text-muted-foreground">Audit product lifecycles dynamically. Explore ecological offsets and verified compliance parameters.</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+              
+              {/* Toggle Panel Left Column */}
+              <div className="lg:col-span-4 flex flex-col justify-between gap-4">
+                <div className="space-y-3">
+                  {SUSTAINABILITY_DATA.map((prod) => {
+                    const isSelected = selectedWowProduct.id === prod.id;
+                    return (
+                      <button
+                        key={prod.id}
+                        onClick={() => setSelectedWowProduct(prod)}
+                        className={`w-full text-left p-4 rounded-2xl border transition-all duration-300 cursor-pointer flex items-center justify-between ${
+                          isSelected 
+                            ? "bg-primary border-primary text-primary-foreground shadow-lg scale-[1.02]" 
+                            : "bg-card border-border/40 hover:bg-muted/40 text-primary"
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-bold uppercase tracking-wider text-accent">{prod.certs[0]}</p>
+                          <h4 className="text-sm font-bold truncate max-w-[220px]">{prod.name}</h4>
+                        </div>
+                        <ChevronRight className={`h-4 w-4 ${isSelected ? 'opacity-100' : 'opacity-40'}`} />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="glass-panel rounded-2xl p-5 border border-[#d0c6b8]/40 text-left space-y-2">
+                  <h5 className="text-[10px] font-bold uppercase tracking-wider text-[#6a7b6e]">Eco Certification Auditing</h5>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Every item passes direct third-party lab documentation verification before achieving its Eco Score. Look for verified badges on the marketplace.
+                  </p>
+                </div>
+              </div>
+
+              {/* Dynamic Display Right Column */}
+              <div className="lg:col-span-8 glass-panel rounded-3xl p-6 sm:p-8 flex flex-col justify-between text-left border border-[#d0c6b8]/50 dark:border-[#243b2e]/50">
+                <div className="space-y-6">
+                  <div className="flex justify-between items-start border-b border-[#d0c6b8]/20 pb-4">
+                    <div>
+                      <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#6a7b6e]">Verified Product Telemetry</span>
+                      <h3 className="text-xl sm:text-2xl font-black text-primary mt-1">{selectedWowProduct.name}</h3>
+                    </div>
+                    <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white border-none py-1 px-3 text-xs font-bold rounded-full">
+                      Eco Score: {selectedWowProduct.score}
+                    </Badge>
+                  </div>
+
+                  <p className="text-sm leading-relaxed text-muted-foreground">{selectedWowProduct.desc}</p>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-[#FFFDF8]/60 dark:bg-[#14241C]/60 rounded-2xl p-4 border border-border/20">
+                      <span className="text-[9px] font-extrabold uppercase text-[#6a7b6e]">Carbon Impact</span>
+                      <div className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">{selectedWowProduct.carbon}</div>
+                      <span className="text-[9px] text-muted-foreground">CO₂ emissions saved</span>
+                    </div>
+                    <div className="bg-[#FFFDF8]/60 dark:bg-[#14241C]/60 rounded-2xl p-4 border border-border/20">
+                      <span className="text-[9px] font-extrabold uppercase text-[#6a7b6e]">Water Conserved</span>
+                      <div className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">{selectedWowProduct.water}</div>
+                      <span className="text-[9px] text-muted-foreground">Fresh water saved</span>
+                    </div>
+                    <div className="bg-[#FFFDF8]/60 dark:bg-[#14241C]/60 rounded-2xl p-4 border border-border/20">
+                      <span className="text-[9px] font-extrabold uppercase text-[#6a7b6e]">Eco Rating</span>
+                      <div className="text-2xl sm:text-3xl font-black text-primary mt-1">Grade A</div>
+                      <span className="text-[9px] text-muted-foreground">Material transparency</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-[#d0c6b8]/20 pt-6 mt-6 flex flex-wrap items-center gap-2">
+                  <span className="text-[9px] font-extrabold uppercase text-[#6a7b6e] mr-2">Verified Compliance Audits:</span>
+                  {selectedWowProduct.certs.map((cert) => (
+                    <Badge key={cert} variant="accent" className="text-[10px] font-semibold">
+                      ✓ {cert}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
         </section>
       )
     },

@@ -71,7 +71,43 @@ export default function Navbar() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Keyboard shortcut Ctrl/Cmd+K or / to open Spotlight Search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsSpotlightOpen((prev) => !prev);
+      }
+      if (e.key === "/") {
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") {
+          return;
+        }
+        e.preventDefault();
+        setIsSpotlightOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      router.push(`/marketplace?search=${encodeURIComponent(searchTerm.trim())}`);
+      setIsSpotlightOpen(false);
+    }
+  };
+
+  const handleSuggestionClick = (val: string) => {
+    setSearchTerm(val);
+    router.push(`/marketplace?search=${encodeURIComponent(val)}`);
+    setIsSpotlightOpen(false);
+  };
 
   if (pathname?.startsWith("/seller/dashboard") || pathname?.startsWith("/admin/dashboard")) return null;
 
@@ -98,24 +134,43 @@ export default function Navbar() {
               Marketplace
             </Link>
             <Link
+              href="/#categories"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Categories
+            </Link>
+            <Link
+              href="/#impact-tracker"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Impact Tracker
+            </Link>
+            <Link
+              href="/#verified-sellers"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Verified Sellers
+            </Link>
+            <Link
               href="/#sustainability-mission"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              Our Mission
-            </Link>
-            <Link
-              href="/#how-it-works"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Verification
+              About
             </Link>
           </nav>
 
-          {/* Desktop Search Bar */}
+          {/* Desktop Search Bar Trigger */}
           <div className="hidden md:flex items-center flex-1 w-full max-w-[180px] lg:max-w-[260px] mx-4 lg:mx-8">
-            <Suspense fallback={<div className="w-full h-8 bg-muted/20 animate-pulse rounded-full" />}>
-              <NavbarSearch />
-            </Suspense>
+            <div 
+              onClick={() => setIsSpotlightOpen(true)}
+              className="w-full relative cursor-pointer group"
+            >
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/60 group-hover:text-primary transition-colors" />
+              <div className="w-full bg-muted/40 hover:bg-muted/60 border border-border/40 rounded-full pl-9 pr-4 py-1.5 text-xs text-muted-foreground/50 select-none transition-all flex items-center justify-between">
+                <span>Search products...</span>
+                <span className="text-[9px] bg-muted/70 px-1.5 py-0.5 rounded border border-border/20 text-muted-foreground/70 font-semibold tracking-widest">⌘K</span>
+              </div>
+            </div>
           </div>
 
           {/* Right Action Items */}
@@ -235,11 +290,17 @@ export default function Navbar() {
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-border/40 bg-background px-4 py-4 space-y-3 z-30">
-            {/* Mobile Search Bar */}
-            <div className="relative pb-2">
-              <Suspense fallback={<div className="w-full h-9 bg-muted/20 animate-pulse rounded-full" />}>
-                <NavbarSearch onSearchComplete={() => setIsMobileMenuOpen(false)} />
-              </Suspense>
+            {/* Mobile Search Bar Trigger */}
+            <div 
+              onClick={() => { setIsSpotlightOpen(true); setIsMobileMenuOpen(false); }}
+              className="relative pb-2 cursor-pointer"
+            >
+              <div className="w-full relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/60" />
+                <div className="w-full bg-muted/40 border border-border/40 rounded-full pl-9 pr-4 py-2 text-xs text-muted-foreground/50 select-none">
+                  Search sustainable products...
+                </div>
+              </div>
             </div>
             <Link
               href="/marketplace"
@@ -249,22 +310,136 @@ export default function Navbar() {
               Marketplace
             </Link>
             <Link
+              href="/#categories"
+              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Categories
+            </Link>
+            <Link
+              href="/#impact-tracker"
+              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Impact Tracker
+            </Link>
+            <Link
+              href="/#verified-sellers"
+              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Verified Sellers
+            </Link>
+            <Link
               href="/#sustainability-mission"
               className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Our Mission
-            </Link>
-            <Link
-              href="/#how-it-works"
-              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Verification
+              About
             </Link>
           </div>
         )}
       </header>
+
+      {/* Spotlight Search Overlay Modal */}
+      {isSpotlightOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] p-4">
+          {/* Backdrop blur */}
+          <div className="absolute inset-0 bg-background/60 backdrop-blur-md" onClick={() => setIsSpotlightOpen(false)} />
+          
+          {/* Spotlight Card */}
+          <div className="relative w-full max-w-xl glass-panel rounded-3xl shadow-2xl z-10 overflow-hidden flex flex-col max-h-[60vh] border border-[#d0c6b8]/50 dark:border-[#243b2e]/50">
+            {/* Input field */}
+            <form onSubmit={handleSearchSubmit} className="flex items-center border-b border-[#d0c6b8]/20 dark:border-[#243b2e]/20 px-4 py-4">
+              <Search className="h-5 w-5 text-primary mr-3" />
+              <input
+                autoFocus
+                type="text"
+                placeholder="Search sustainable products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 bg-transparent text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/50 font-medium"
+              />
+              <button 
+                type="button" 
+                onClick={() => setIsSpotlightOpen(false)}
+                className="text-[9px] bg-muted/40 hover:bg-muted text-muted-foreground font-bold px-2 py-1 rounded border border-border/30 cursor-pointer"
+              >
+                ESC
+              </button>
+            </form>
+            
+            {/* Recommendations / History */}
+            <div className="overflow-y-auto p-4 space-y-5 text-xs text-left">
+              {/* Recent Searches */}
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-[#6a7b6e] uppercase tracking-wider">Recent Searches</h4>
+                <div className="flex flex-wrap gap-2">
+                  {["Bamboo Toothbrush", "Organic Cotton Shirt", "Solar Power Bank", "Recycled Paper Notebook"].map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => handleSuggestionClick(item)}
+                      className="px-3 py-1.5 bg-muted/30 hover:bg-muted/70 text-foreground rounded-full border border-border/30 transition-all text-[11px] font-medium cursor-pointer"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Popular Categories */}
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-[#6a7b6e] uppercase tracking-wider">Popular Categories</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { name: "Zero-Waste Living", slug: "zero-waste-living" },
+                    { name: "Organic Apparel", slug: "organic-apparel" },
+                    { name: "Eco Home Goods", slug: "eco-home-goods" },
+                    { name: "Renewable Energy", slug: "renewable-energy" }
+                  ].map((cat) => (
+                    <button
+                      key={cat.slug}
+                      onClick={() => {
+                        router.push(`/marketplace?category=${cat.slug}`);
+                        setIsSpotlightOpen(false);
+                      }}
+                      className="flex items-center space-x-2 p-2 hover:bg-muted/40 rounded-xl transition-all border border-transparent hover:border-border/20 text-[11px] font-medium text-foreground text-left cursor-pointer"
+                    >
+                      <span className="text-emerald-500">🌱</span>
+                      <span>{cat.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* AI Search Suggestions */}
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-[#6a7b6e] uppercase tracking-wider">AI Search Suggestions</h4>
+                <div className="space-y-1">
+                  {[
+                    "Carbon Neutral Biodegradable packaging",
+                    "GOTS organic cotton supplier India",
+                    "Upcycled reclaimed wood dining tables",
+                    "Plastic-free ocean compostable replacements"
+                  ].map((sug) => (
+                    <button
+                      key={sug}
+                      onClick={() => handleSuggestionClick(sug)}
+                      className="w-full flex items-center justify-between p-2 hover:bg-muted/30 rounded-xl transition-all text-[11px] text-muted-foreground hover:text-foreground text-left font-medium cursor-pointer"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <span className="text-emerald-500 font-bold">✨</span>
+                        <span>{sug}</span>
+                      </div>
+                      <span className="text-[9px] text-muted-foreground/60 italic">AI Sug</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cart Drawer Slide-over */}
       <AnimatePresence>

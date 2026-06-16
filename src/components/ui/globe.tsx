@@ -75,7 +75,7 @@ const drawWorldMap = () => {
   return ctx.getImageData(0, 0, 360, 180);
 };
 
-export default function Globe() {
+export default function Globe({ scrollProgress = 0 }: { scrollProgress?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Rotation states
@@ -188,8 +188,10 @@ export default function Globe() {
       // Cosine/Sine values
       const cosX = Math.cos(rotationX.current);
       const sinX = Math.sin(rotationX.current);
-      const cosY = Math.cos(rotationY.current);
-      const sinY = Math.sin(rotationY.current);
+      
+      const currentScrollRotation = scrollProgress * Math.PI * 2.2;
+      const cosY = Math.cos(rotationY.current + currentScrollRotation);
+      const sinY = Math.sin(rotationY.current + currentScrollRotation);
 
       // Project all points and split into back vs front lists based on Z coordinate
       const projected = points.map((p) => {
@@ -328,6 +330,51 @@ export default function Globe() {
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
       />
+
+      {/* USA Label */}
+      <div className="absolute top-[22%] left-[-4%] flex items-center space-x-1.5 z-20">
+        <div className="glass-panel rounded-xl p-2 text-[9px] pointer-events-none shadow-md">
+          <div className="flex items-center space-x-1 font-bold text-foreground">
+            <span>🇺🇸</span>
+            <span>USA</span>
+          </div>
+          <p className="text-[8px] text-muted-foreground font-semibold">102 Eco Manufacturers</p>
+        </div>
+        <div className="h-px w-4 bg-border/40" />
+        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 relative flex items-center justify-center">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        </div>
+      </div>
+
+      {/* Germany Label */}
+      <div className="absolute top-[10%] right-[-2%] flex items-center space-x-1.5 z-20">
+        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 relative flex items-center justify-center">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        </div>
+        <div className="h-px w-4 bg-border/40" />
+        <div className="glass-panel rounded-xl p-2 text-[9px] pointer-events-none shadow-md">
+          <div className="flex items-center space-x-1 font-bold text-foreground">
+            <span>🇩🇪</span>
+            <span>Germany</span>
+          </div>
+          <p className="text-[8px] text-muted-foreground font-semibold">48 Carbon Neutral Brands</p>
+        </div>
+      </div>
+
+      {/* India Label */}
+      <div className="absolute bottom-[20%] right-[-2%] flex items-center space-x-1.5 z-20">
+        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 relative flex items-center justify-center">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        </div>
+        <div className="h-px w-4 bg-border/40" />
+        <div className="glass-panel rounded-xl p-2 text-[9px] pointer-events-none shadow-md">
+          <div className="flex items-center space-x-1 font-bold text-foreground">
+            <span>🇮🇳</span>
+            <span>India</span>
+          </div>
+          <p className="text-[8px] text-muted-foreground font-semibold">132 Verified Sellers</p>
+        </div>
+      </div>
     </div>
   );
 }

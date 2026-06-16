@@ -1,42 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F5F1EA;
-  --foreground: #1A1A1A;
-  --primary: #1F3A2E;
-  --primary-foreground: #F5F1EA;
-  --secondary: #6B4F3A;
-  --secondary-foreground: #F5F1EA;
-  --accent: #A3B18A;
-  --accent-foreground: #1F3A2E;
-  --premium-accent: #B87333;
-  --premium-accent-foreground: #F5F1EA;
-  --muted: #E6DFD5;
-  --muted-foreground: #5A5A5A;
-  --border: #D8CEBE;
-  --card: #FFFFFF;
-  --card-foreground: #1A1A1A;
-  --ring: #1F3A2E;
+  --background: #F7F4ED;
+  --foreground: #173528;
+  --primary: #173528;
+  --primary-foreground: #FFFDF8;
+  --secondary: #8B5E3C;
+  --secondary-foreground: #FFFDF8;
+  --accent: #8EA58C;
+  --accent-foreground: #173528;
+  --premium-accent: #22C55E;
+  --premium-accent-foreground: #FFFDF8;
+  --muted: #EADFD3;
+  --muted-foreground: #6A7B6E;
+  --border: #D0C6B8;
+  --card: #FFFDF8;
+  --card-foreground: #173528;
+  --ring: #173528;
   --radius: 16px;
 }
 
 .dark {
-  --background: #121A16;
-  --foreground: #F5F1EA;
-  --primary: #E1EFEA;
-  --primary-foreground: #121A16;
+  --background: #0E1A14;
+  --foreground: #F7F4ED;
+  --primary: #8EA58C;
+  --primary-foreground: #0E1A14;
   --secondary: #D9C3B0;
-  --secondary-foreground: #121A16;
-  --accent: #A3B18A;
-  --accent-foreground: #121A16;
-  --premium-accent: #E4A054;
-  --premium-accent-foreground: #121A16;
-  --muted: #1E2B24;
-  --muted-foreground: #A0B0A7;
-  --border: #2A3A31;
-  --card: #1C2621;
-  --card-foreground: #F5F1EA;
-  --ring: #E1EFEA;
+  --secondary-foreground: #0E1A14;
+  --accent: #8EA58C;
+  --accent-foreground: #0E1A14;
+  --premium-accent: #22C55E;
+  --premium-accent-foreground: #0E1A14;
+  --muted: #182C22;
+  --muted-foreground: #8EA58C;
+  --border: #243B2E;
+  --card: #14241C;
+  --card-foreground: #F7F4ED;
+  --ring: #8EA58C;
 }
 
 @theme {
@@ -149,4 +149,35 @@ html, body {
 @keyframes spinner-fade {
   0%   { opacity: 1; }
   100% { opacity: 0.15; }
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 32px 0 rgba(23, 53, 40, 0.08);
+}
+
+.dark .glass-panel {
+  background: rgba(20, 36, 28, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-badge {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dark .glass-badge {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
