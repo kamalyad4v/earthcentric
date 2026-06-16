@@ -152,6 +152,16 @@ export default function Navbar() {
               Verified Sellers
             </Link>
             <Link
+              href="/blog"
+              className={
+                pathname === "/blog"
+                  ? "text-primary dark:text-foreground font-semibold"
+                  : "text-muted-foreground hover:text-foreground transition-colors"
+              }
+            >
+              Blog
+            </Link>
+            <Link
               href="/#sustainability-mission"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -329,6 +339,13 @@ export default function Navbar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Verified Sellers
+            </Link>
+            <Link
+              href="/blog"
+              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Blog
             </Link>
             <Link
               href="/#sustainability-mission"

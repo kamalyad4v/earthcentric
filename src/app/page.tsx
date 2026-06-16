@@ -282,40 +282,29 @@ const SELLERS = [
   }
 ];
 
+const BASE_SAVINGS: Record<string, { carbon: number; water: number; waste: number }> = {
+  "cotton-shirt": { carbon: 12.5, water: 420, waste: 0.22 },
+  "bamboo-brush": { carbon: 0.65, water: 150, waste: 0.05 },
+  "solar-lamp": { carbon: 45.2, water: 80, waste: 1.15 },
+  "notebook": { carbon: 3.1, water: 350, waste: 0.38 }
+};
+
 function AnimatedCounter({ value, isDecimal = false, suffix = "" }: { value: number; isDecimal?: boolean; suffix?: string }) {
-  const [count, setCount] = useState(0);
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const elementRef = useRef<HTMLSpanElement>(null);
+  const [count, setCount] = useState(isDecimal ? 0 : Math.floor(value * 0.7));
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setHasAnimated(true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (elementRef.current) {
-      observer.observe(elementRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!hasAnimated) return;
-
-    const duration = 1500;
-    const steps = 60;
+    const duration = 1200;
+    const steps = 30;
     const stepTime = duration / steps;
+    const startVal = isDecimal ? 0 : Math.floor(value * 0.7);
+    const diff = value - startVal;
     let currentStep = 0;
 
     const timer = setInterval(() => {
       currentStep++;
       const progress = currentStep / steps;
-      const currentVal = progress * value;
+      const easeProgress = progress * (2 - progress); // easeOutQuad
+      const currentVal = startVal + easeProgress * diff;
       
       if (currentStep >= steps) {
         clearInterval(timer);
@@ -326,10 +315,10 @@ function AnimatedCounter({ value, isDecimal = false, suffix = "" }: { value: num
     }, stepTime);
 
     return () => clearInterval(timer);
-  }, [value, isDecimal, hasAnimated]);
+  }, [value, isDecimal]);
 
   return (
-    <span ref={elementRef} className="tabular-nums">
+    <span className="tabular-nums">
       {isDecimal ? count.toFixed(1) : count.toLocaleString()}
       {suffix}
     </span>
@@ -340,6 +329,7 @@ export default function Homepage() {
   const { addToCart } = useCart();
   const [addedItemName, setAddedItemName] = useState<string | null>(null);
   const [selectedWowProduct, setSelectedWowProduct] = useState(SUSTAINABILITY_DATA[0]);
+  const [purchaseQuantity, setPurchaseQuantity] = useState(50);
 
   const sections = [
     {
@@ -573,23 +563,50 @@ export default function Homepage() {
 
                   <p className="text-sm leading-relaxed text-muted-foreground">{selectedWowProduct.desc}</p>
 
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-[#FFFDF8]/60 dark:bg-[#14241C]/60 rounded-2xl p-4 border border-border/20">
-                      <span className="text-[9px] font-extrabold uppercase text-[#6a7b6e]">Carbon Impact</span>
-                      <div className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">{selectedWowProduct.carbon}</div>
-                      <span className="text-[9px] text-muted-foreground">CO₂ emissions saved</span>
+                  {/* Ecological Savings Simulator */}
+                  <div className="space-y-3 bg-[#FFFDF8]/40 dark:bg-[#14241C]/40 rounded-2xl p-4 border border-border/20 text-left">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-[#6a7b6e]">Simulated Purchase Quantity:</span>
+                      <span className="font-black text-primary px-2.5 py-0.5 bg-[#d0c6b8]/20 dark:bg-emerald-950/40 rounded-md">{purchaseQuantity} units</span>
                     </div>
-                    <div className="bg-[#FFFDF8]/60 dark:bg-[#14241C]/60 rounded-2xl p-4 border border-border/20">
-                      <span className="text-[9px] font-extrabold uppercase text-[#6a7b6e]">Water Conserved</span>
-                      <div className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">{selectedWowProduct.water}</div>
-                      <span className="text-[9px] text-muted-foreground">Fresh water saved</span>
-                    </div>
-                    <div className="bg-[#FFFDF8]/60 dark:bg-[#14241C]/60 rounded-2xl p-4 border border-border/20">
-                      <span className="text-[9px] font-extrabold uppercase text-[#6a7b6e]">Eco Rating</span>
-                      <div className="text-2xl sm:text-3xl font-black text-primary mt-1">Grade A</div>
-                      <span className="text-[9px] text-muted-foreground">Material transparency</span>
-                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="500"
+                      value={purchaseQuantity}
+                      onChange={(e) => setPurchaseQuantity(parseInt(e.target.value))}
+                      className="w-full h-1.5 bg-[#d0c6b8]/40 dark:bg-[#243b2e]/40 rounded-lg appearance-none cursor-pointer accent-emerald-600 focus:outline-none"
+                    />
+                    <p className="text-[9px] text-muted-foreground italic">Drag the slider to calculate the cumulative ecological savings at commercial scale.</p>
                   </div>
+
+                  {/* Dynamic Calculation Cards */}
+                  {(() => {
+                    const savings = BASE_SAVINGS[selectedWowProduct.id] || { carbon: 0, water: 0, waste: 0 };
+                    const totalCarbon = (savings.carbon * purchaseQuantity).toFixed(1);
+                    const totalWater = Math.round(savings.water * purchaseQuantity).toLocaleString();
+                    const totalWaste = (savings.waste * purchaseQuantity).toFixed(1);
+
+                    return (
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-[#FFFDF8]/60 dark:bg-[#14241C]/60 rounded-2xl p-4 border border-border/20">
+                          <span className="text-[9px] font-extrabold uppercase text-[#6a7b6e]">Simulated CO₂ Offset</span>
+                          <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">{totalCarbon} kg</div>
+                          <span className="text-[9px] text-muted-foreground">Emissions avoided</span>
+                        </div>
+                        <div className="bg-[#FFFDF8]/60 dark:bg-[#14241C]/60 rounded-2xl p-4 border border-border/20">
+                          <span className="text-[9px] font-extrabold uppercase text-[#6a7b6e]">Water Conserved</span>
+                          <div className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">{totalWater} L</div>
+                          <span className="text-[9px] text-muted-foreground">Fresh water saved</span>
+                        </div>
+                        <div className="bg-[#FFFDF8]/60 dark:bg-[#14241C]/60 rounded-2xl p-4 border border-border/20">
+                          <span className="text-[9px] font-extrabold uppercase text-[#6a7b6e]">Landfill Diverted</span>
+                          <div className="text-xl sm:text-2xl font-black text-primary mt-1">{totalWaste} kg</div>
+                          <span className="text-[9px] text-muted-foreground">Plastic waste avoided</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="border-t border-[#d0c6b8]/20 pt-6 mt-6 flex flex-wrap items-center gap-2">
@@ -714,7 +731,7 @@ export default function Homepage() {
                 We vet, so you can buy with confidence.
               </h2>
               <p className="text-gray-300 leading-relaxed text-base sm:text-lg">
-                We believe greenwashing hurts our planet. That's why EarthCentric enforces an audit system on every seller profile. No brand is allowed on the catalog without submitting legal identification, GST records, and verified environmental credentials.
+                To eliminate misleading environmental claims, EarthCentric enforces an audit system on every seller profile. No brand is allowed on the catalog without submitting legal identification, GST records, and verified environmental credentials.
               </p>
               <div className="flex flex-col space-y-4 pt-2">
                 <div className="flex items-center space-x-3">
@@ -930,6 +947,26 @@ export default function Homepage() {
               <p className="text-muted-foreground max-w-lg leading-relaxed text-sm sm:text-base">
                 Join thousands of conscious consumers and verified suppliers shifting to carbon-neutral purchasing today.
               </p>
+
+              {/* Visual Social Proof Element */}
+              <div className="flex flex-col items-center space-y-2 mt-2">
+                <div className="flex -space-x-2 overflow-hidden">
+                  <img className="inline-block h-8 w-8 rounded-full ring-2 ring-card object-cover" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80" alt="User" />
+                  <img className="inline-block h-8 w-8 rounded-full ring-2 ring-card object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80" alt="User" />
+                  <img className="inline-block h-8 w-8 rounded-full ring-2 ring-card object-cover" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80" alt="User" />
+                  <img className="inline-block h-8 w-8 rounded-full ring-2 ring-card object-cover" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80" alt="User" />
+                </div>
+                <div className="flex items-center space-x-1.5 text-xs">
+                  <div className="flex text-amber-500">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-3.5 w-3.5 fill-current text-amber-500" />
+                    ))}
+                  </div>
+                  <span className="text-muted-foreground font-semibold">
+                    4.9/5 stars from 2,300+ verified buyers & suppliers
+                  </span>
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
                 <Link href="/marketplace">
                   <LiquidButton size="lg" className="w-full sm:w-auto">

@@ -90,6 +90,11 @@ export default function Footer() {
                   Admin Approval Center
                 </Link>
               </li>
+              <li>
+                <Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Sustainability Blog
+                </Link>
+              </li>
             </ul>
           </div>
 
