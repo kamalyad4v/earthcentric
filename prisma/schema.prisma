@@ -1,0 +1,290 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DocumentType {
+  GST
+  PAN
+  BUSINESS_REGISTRATION
+  SUSTAINABILITY_CERTIFICATE
+}
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  password      String?        // Hashed password for credentials login
+  emailVerified DateTime?
+  image         String?
+  role          Role           @default(BUYER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  seller        Seller?
+  addresses     Address[]
+  cart          Cart?
+  orders        Order[]
+  reviews       Review[]
+  notifications Notification[]
+}
+
+model Seller {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName        String
+  businessType       String             // e.g. Manufacturer, Brand, Supplier
+  description        String?
+  logoUrl            String?
+  website            String?
+  gstNumber          String?
+  panNumber          String?
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedAt         DateTime?
+  rejectionReason    String?
+  badges             String[]           // Array of badge labels (e.g. "Verified Business", "Verified Sustainable Manufacturer")
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  
+  documents          SellerDocument[]
+  products           Product[]
+  reviews            Review[]           // Direct reviews of the seller
+  payoutRequests     PayoutRequest[]
+}
+
+model SellerDocument {
+  id         String       @id @default(cuid())
+  sellerId   String
+  seller     Seller       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  type       DocumentType
+  fileUrl    String
+  fileName   String
+  uploadedAt DateTime     @default(now())
+}
+
+model Certification {
+  id          String                 @id @default(cuid())
+  name        String                 // e.g. "GOTS Organic Textiles"
+  code        String                 @unique // e.g. "GOTS"
+  logoUrl     String?
+  description String?
+  products    ProductCertification[]
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  products    Product[]
+}
+
+model Product {
+  id                   String                 @id @default(cuid())
+  sellerId             String
+  seller               Seller                 @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  categoryId           String
+  category             Category               @relation(fields: [categoryId], references: [id])
+  name                 String
+  slug                 String                 @unique
+  description          String
+  price                Float
+  stock                Int                    @default(0)
+  sustainabilityScore  Int                    @default(50) // 1-100 score
+  sustainabilityDetail String?                // Explains why it's eco-friendly
+  isApproved           Boolean                @default(false)
+  isArchived           Boolean                @default(false)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  
+  images               ProductImage[]
+  certifications       ProductCertification[]
+  orderItems           OrderItem[]
+  cartItems            CartItem[]
+  reviews              Review[]
+}
+
+model ProductCertification {
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  certificationId String
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+
+  @@id([productId, certificationId])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+}
+
+model Order {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  addressId   String
+  address     Address         @relation(fields: [addressId], references: [id])
+  totalAmount Float
+  status      OrderStatus     @default(PLACED)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  items       OrderItem[]
+  payment     Payment?
+  timeline    OrderTimeline[]
+}
+
+model OrderTimeline {
+  id          String      @id @default(cuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status      OrderStatus
+  description String
+  createdAt   DateTime    @default(now())
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float    // Lock in price at checkout
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  items     CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+
+  @@unique([cartId, productId])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  street     String
+  city       String
+  state      String
+  postalCode String
+  country    String
+  isDefault  Boolean  @default(false)
+  orders     Order[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sellerId  String?
+  seller    Seller?  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  rating    Int      // 1 to 5
+  comment   String?
+  imageUrls String[] // Images attached to product review
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String        @unique
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  razorpayOrderId   String
+  razorpayPaymentId String?
+  razorpaySignature String?
+  status            PaymentStatus @default(PENDING)
+  amount            Float
+  currency          String        @default("INR")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  details    String?
+  adminEmail String
+  createdAt  DateTime @default(now())
+}
+
+enum PayoutStatus {
+  PENDING
+  SETTLED
+  REJECTED
+}
+
+model PayoutRequest {
+  id          String       @id @default(cuid())
+  sellerId    String
+  seller      Seller       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  amount      Float
+  status      PayoutStatus @default(PENDING)
+  requestedAt DateTime     @default(now())
+  settledAt   DateTime?
+  adminEmail  String?
+  notes       String?
+}
