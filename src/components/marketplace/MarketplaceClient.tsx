@@ -12,11 +12,8 @@ import {
   Search,
   SlidersHorizontal,
   Star,
-  CheckCircle2,
   ChevronDown,
   ShoppingBag,
-  Leaf,
-  Info,
   ChevronLeft,
   ChevronRight,
   ArrowRight,
@@ -187,7 +184,7 @@ export default function MarketplaceClient() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   
   // Custom Storefront state
-  const [showCatalogExplicitly, setShowCatalogExplicitly] = useState(initialCategory !== "all" || initialSearch !== "");
+  const [showCatalogExplicitly, setShowCatalogExplicitly] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
   
   // Cart Actions & Wishlist
@@ -384,100 +381,7 @@ export default function MarketplaceClient() {
         </div>
       )}
 
-      {/* Sub-Navbar */}
-      <div className="w-full bg-slate-900 text-slate-200 border-t border-slate-800 text-xs px-4 md:px-8 py-2.5 flex items-center justify-between overflow-x-auto whitespace-nowrap scrollbar-none shadow-md">
-        <div className="flex items-center space-x-6">
-          <button 
-            onClick={() => {
-              setCategory("all");
-              setSearch("");
-              setShowCatalogExplicitly(true);
-            }}
-            className="hover:text-emerald-400 font-medium transition-colors flex items-center space-x-1 cursor-pointer"
-          >
-            <SlidersHorizontal className="h-3 w-3" />
-            <span>All Products</span>
-          </button>
-          <button 
-            onClick={() => {
-              setCategory("all");
-              setSearch("");
-              setShowCatalogExplicitly(false);
-            }}
-            className="hover:text-emerald-400 font-medium transition-colors flex items-center space-x-1 cursor-pointer"
-          >
-            <span>Storefront Home</span>
-          </button>
-          <button 
-            onClick={() => {
-              setCategory("all");
-              setSearch("");
-              setSortBy("popular");
-              setShowCatalogExplicitly(true);
-            }}
-            className="hover:text-emerald-400 transition-colors flex items-center space-x-1 cursor-pointer"
-          >
-            <Star className="h-3 w-3 fill-amber-500 stroke-none" />
-            <span>Best Sellers</span>
-          </button>
-          <button 
-            onClick={() => {
-              setCategory("organic-apparel");
-              setSearch("");
-              setShowCatalogExplicitly(true);
-            }}
-            className={`hover:text-emerald-400 transition-colors cursor-pointer ${category === "organic-apparel" ? "text-emerald-400 font-semibold" : ""}`}
-          >
-            Organic Apparel
-          </button>
-          <button 
-            onClick={() => {
-              setCategory("zero-waste-living");
-              setSearch("");
-              setShowCatalogExplicitly(true);
-            }}
-            className={`hover:text-emerald-400 transition-colors cursor-pointer ${category === "zero-waste-living" ? "text-emerald-400 font-semibold" : ""}`}
-          >
-            Zero-Waste Living
-          </button>
-          <button 
-            onClick={() => {
-              setCategory("renewable-energy");
-              setSearch("");
-              setShowCatalogExplicitly(true);
-            }}
-            className={`hover:text-emerald-400 transition-colors cursor-pointer ${category === "renewable-energy" ? "text-emerald-400 font-semibold" : ""}`}
-          >
-            Renewable Energy
-          </button>
-          <button 
-            onClick={() => {
-              setCategory("eco-home-goods");
-              setSearch("");
-              setShowCatalogExplicitly(true);
-            }}
-            className={`hover:text-emerald-400 transition-colors cursor-pointer ${category === "eco-home-goods" ? "text-emerald-400 font-semibold" : ""}`}
-          >
-            Eco Home Goods
-          </button>
-          <button 
-            onClick={() => {
-              setVerifiedOnly(prev => !prev);
-              setShowCatalogExplicitly(true);
-            }}
-            className={`hover:text-emerald-400 transition-colors flex items-center space-x-1 cursor-pointer ${verifiedOnly ? "text-emerald-400 font-semibold" : ""}`}
-          >
-            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-            <span>Verified Brands</span>
-          </button>
-        </div>
-        <div className="hidden lg:flex items-center space-x-2 text-[11px] text-slate-400">
-          <Leaf className="h-3.5 w-3.5 text-emerald-500 fill-emerald-500/10" />
-          <span>100% Carbon-Neutral Shipments</span>
-        </div>
-      </div>
-
-      {/* 1. Animated Impact Stats Bar (scroll-triggered counters) */}
+      {/* Impact Stats Bar */}
       <ImpactCounterBar />
 
       {showStorefront ? (
@@ -715,220 +619,322 @@ export default function MarketplaceClient() {
           <TestimonialsSection />
         </div>
       ) : (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-          
-          {/* Header */}
-          <div className="flex flex-col space-y-2 border-b border-border/40 pb-6 text-left">
-            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-              <button onClick={() => setShowCatalogExplicitly(false)} className="hover:underline hover:text-primary">Marketplace</button>
-              <span>&gt;</span>
-              <span className="font-semibold text-foreground">Catalog</span>
+        <div className="w-full pb-16 space-y-8 text-left">
+          {/* Wave Hero Banner */}
+          <div className="w-full bg-[#0c4c35] text-white py-14 px-6 md:px-12 relative overflow-hidden flex flex-col justify-center rounded-b-[40px] md:rounded-b-[80px]">
+            {/* Wave backgrounds/decorations */}
+            <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-emerald-800/15 to-transparent pointer-events-none rounded-l-full" />
+            <div className="absolute -right-24 -bottom-24 w-80 h-80 bg-[#0F6E56]/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute left-10 bottom-4 w-40 h-40 bg-white/5 rounded-full pointer-events-none" />
+
+            <div className="max-w-7xl mx-auto w-full relative z-10 space-y-4">
+              <div className="flex items-center space-x-2 text-[11px] text-emerald-300 font-bold uppercase tracking-wider">
+                <button onClick={() => setShowCatalogExplicitly(false)} className="hover:underline text-emerald-300 border-none bg-transparent cursor-pointer">
+                  Marketplace
+                </button>
+                <span>&gt;</span>
+                <span className="text-white">Catalog</span>
+              </div>
+
+              <div className="space-y-1">
+                <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase font-serif">
+                  Eco-Friendly Packaging
+                </h1>
+                <p className="text-xs sm:text-sm text-emerald-100 font-medium">
+                  {products.length} products • Sugarcane Bagasse, Paper & Plant-Based Materials
+                </p>
+              </div>
+
+              {/* Search input box inside wave hero */}
+              <div className="relative max-w-md w-full pt-2">
+                <Search className="absolute left-4 top-5 h-4 w-4 text-white/70" />
+                <input
+                  type="text"
+                  placeholder="Search packaging products..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-black/15 border border-white/20 rounded-full pl-11 pr-4 py-3 text-xs text-white placeholder:text-white/60 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 focus:bg-black/25 transition-all shadow-inner"
+                />
+              </div>
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-primary">Ethical Catalog</h1>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
-              Browse carbon-offset products supplied directly by verified sustainable creators.
-            </p>
           </div>
 
-          {/* Mobile Filter Toggle */}
-          <div className="lg:hidden">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="w-full flex items-center justify-center space-x-2 border-border/60"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              <span>{showMobileFilters ? 'Hide Filters' : 'Show Filters'}</span>
-              <ChevronDown className={`h-3 w-3 transition-transform ${showMobileFilters ? 'rotate-180' : ''}`} />
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             
-            {/* FILTER SIDEBAR (STRIPE STYLE) */}
-            <div className={`lg:col-span-1 space-y-6 text-left ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
-              <div className="rounded-xl border border-border/60 bg-card p-5 space-y-6 shadow-sm">
-                <div className="flex items-center justify-between border-b border-border/20 pb-3">
-                  <h3 className="font-bold text-sm text-primary flex items-center space-x-1.5">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    <span>Filters</span>
-                  </h3>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={handleClearAllFilters}
-                    className="text-xs text-muted-foreground hover:text-foreground p-0 h-auto"
+            {/* Horizontal Sub-category Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto py-2 scrollbar-none whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0">
+              {[
+                { id: "all", name: "All" },
+                { id: "bagasse-trays", name: "Bagasse Trays" },
+                { id: "delivery-containers", name: "Delivery Containers" },
+                { id: "clamshells", name: "Clamshells" },
+                { id: "tableware", name: "Tableware" },
+                { id: "paper-products", name: "Paper Products" },
+                { id: "cutlery", name: "Cutlery" },
+                { id: "housekeeping", name: "Housekeeping" },
+                { id: "disposable", name: "Disposable" },
+              ].map((cat) => {
+                const isSelected = category.toLowerCase().replace(/[^a-z0-9]+/g, "-") === cat.id || (cat.id === "all" && category === "all");
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setCategory(cat.id === "all" ? "all" : cat.name);
+                      setSearch(""); // clear search
+                    }}
+                    className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
+                      isSelected
+                        ? "bg-[#0F6E56] border-[#0F6E56] text-white shadow-sm"
+                        : "bg-white border-slate-100 text-slate-700 hover:bg-slate-50"
+                    }`}
                   >
-                    Clear all
-                  </Button>
-                </div>
+                    {cat.name}
+                  </button>
+                );
+              })}
+            </div>
 
-                {/* Search Input */}
-                <div className="space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Search</span>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
-                    <Input
-                      placeholder="Hemp, wood, solar..."
-                      className="pl-9 text-xs"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
+            {/* Mobile Filter Toggle */}
+            <div className="lg:hidden pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowMobileFilters(!showMobileFilters)}
+                className="w-full flex items-center justify-center space-x-2 border-slate-200"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>{showMobileFilters ? 'Hide Filters' : 'Show Filters'}</span>
+                <ChevronDown className={`h-3 w-3 transition-transform ${showMobileFilters ? 'rotate-180' : ''}`} />
+              </Button>
+            </div>
+
+            {/* Filters and Grid Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start pt-2">
+              
+              {/* Sidebar Filters */}
+              <div className={`lg:col-span-1 space-y-6 text-left ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
+                <div className="rounded-3xl border border-slate-100 bg-white p-6 space-y-6 shadow-sm">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 className="font-extrabold text-sm text-slate-800 flex items-center space-x-1.5">
+                      <SlidersHorizontal className="h-4 w-4 text-[#0F6E56]" />
+                      <span>Filters</span>
+                    </h3>
+                    <button
+                      onClick={handleClearAllFilters}
+                      className="text-xs font-bold text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+
+                  {/* Sidebar Search */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Search Products</span>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                      <Input
+                        placeholder="Type keywords..."
+                        className="pl-9 text-xs border-slate-200 focus:ring-[#0F6E56] rounded-xl"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Category Filter */}
+                  <div className="space-y-2.5 border-t border-slate-100 pt-4">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Category</span>
+                    <div className="space-y-1.5">
+                      {CATEGORIES_SLUGS.map((cat) => (
+                        <label
+                          key={cat.id}
+                          className={`flex items-center space-x-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-all text-xs font-semibold ${
+                            category === cat.id
+                              ? "bg-[#ebf5f0] text-[#0F6E56]"
+                              : "text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          <span className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                            category === cat.id
+                              ? "border-[#0F6E56]"
+                              : "border-slate-300"
+                          }`}>
+                            {category === cat.id && (
+                              <span className="h-2 w-2 rounded-full bg-[#0F6E56]" />
+                            )}
+                          </span>
+                          <input
+                            type="radio"
+                            name="category-filter"
+                            value={cat.id}
+                            checked={category === cat.id}
+                            onChange={() => setCategory(cat.id)}
+                            className="sr-only"
+                          />
+                          <span>{cat.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Price Range Filter */}
+                  <div className="space-y-2.5 border-t border-slate-100 pt-4">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Price Range</span>
+                    <div className="space-y-1.5">
+                      {[
+                        { id: "all", label: "All Prices" },
+                        { id: "under-500", label: "Under ₹500" },
+                        { id: "500-2000", label: "₹500 – ₹2,000" },
+                        { id: "above-2000", label: "Above ₹2,000" },
+                      ].map((preset) => (
+                        <label
+                          key={preset.id}
+                          className={`flex items-center space-x-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-all text-xs font-semibold ${
+                            pricePreset === preset.id
+                              ? "bg-[#ebf5f0] text-[#0F6E56]"
+                              : "text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          <span className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                            pricePreset === preset.id
+                              ? "border-[#0F6E56]"
+                              : "border-slate-300"
+                          }`}>
+                            {pricePreset === preset.id && (
+                              <span className="h-2 w-2 rounded-full bg-[#0F6E56]" />
+                            )}
+                          </span>
+                          <input
+                            type="radio"
+                            name="price-filter"
+                            value={preset.id}
+                            checked={pricePreset === preset.id}
+                            onChange={() => setPricePreset(preset.id)}
+                            className="sr-only"
+                          />
+                          <span>{preset.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sustainability score range */}
+                  <div className="space-y-2.5 border-t border-slate-100 pt-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center space-x-1">
+                        <span>Min Eco Score</span>
+                      </span>
+                      <span className="text-xs font-black text-[#0F6E56]">{minScore}+</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="50"
+                      max="100"
+                      value={minScore}
+                      onChange={(e) => setMinScore(Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#0F6E56]"
+                    />
+                  </div>
+
+                  {/* Verified Sellers Toggle */}
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                    <div className="space-y-0.5 pr-2">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                        Verified Brands Only
+                      </span>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        Only show verified sustainability profiles.
+                      </p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={verifiedOnly}
+                      onChange={(e) => setVerifiedOnly(e.target.checked)}
+                      className="h-4.5 w-4.5 rounded border-slate-300 text-[#0F6E56] focus:ring-[#0F6E56] cursor-pointer"
                     />
                   </div>
                 </div>
-
-                {/* Categories */}
-                <div className="space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Category</span>
-                  <div className="space-y-1">
-                    {CATEGORIES_SLUGS.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => setCategory(cat.id)}
-                        className={`flex w-full items-center justify-between rounded px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-muted/50 cursor-pointer ${
-                          category === cat.id ? "bg-accent/15 font-semibold text-primary" : "text-muted-foreground"
-                        }`}
-                      >
-                        {cat.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Sustainability score threshold */}
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center space-x-1">
-                      <Leaf className="h-3 w-3 text-emerald-600" />
-                      <span>Min Sustainability Score</span>
-                    </span>
-                    <span className="text-xs font-bold text-emerald-600">{minScore}+</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={minScore}
-                    onChange={(e) => setMinScore(Number(e.target.value))}
-                    className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                  />
-                  <div className="flex items-center space-x-1.5 text-[10px] text-muted-foreground bg-muted/20 rounded p-2">
-                    <Info className="h-3.5 w-3.5 text-primary shrink-0" />
-                    <span>Our score measures manufacturing carbon footprint, circular materials, and fair-wage audits.</span>
-                  </div>
-                </div>
-
-                {/* Verified Seller Toggle */}
-                <div className="flex items-center justify-between border-t border-border/20 pt-4">
-                  <div className="space-y-0.5 pr-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Verified Brands Only
-                    </span>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      Only show products with active verification status.
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={verifiedOnly}
-                    onChange={(e) => setVerifiedOnly(e.target.checked)}
-                    className="h-4.5 w-4.5 rounded border-border text-primary focus:ring-primary cursor-pointer"
-                  />
-                </div>
               </div>
-            </div>
 
-            {/* PRODUCT CATALOG GRID */}
-            <div className="lg:col-span-3 space-y-6">
-              
-              {/* 4. Smart Filter + Sort Bar */}
-              <div className="sticky top-20 z-30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-muted/20 border border-border/40 rounded-2xl px-5 py-4 shadow-sm backdrop-blur-md">
+              {/* Product Grid Area */}
+              <div className="lg:col-span-3 space-y-6">
                 
-                {/* Left side: Preset Price Filter Pills */}
-                <div className="flex flex-wrap gap-2 overflow-x-auto scrollbar-none py-0.5">
-                  {[
-                    { id: "all", label: "All Prices" },
-                    { id: "under-500", label: "Under ₹500" },
-                    { id: "500-2000", label: "₹500 - ₹2000" },
-                    { id: "above-2000", label: "Above ₹2000" },
-                  ].map((preset) => (
-                    <button
-                      key={preset.id}
-                      onClick={() => setPricePreset(preset.id)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 border ${
-                        pricePreset === preset.id
-                          ? "bg-primary border-primary text-primary-foreground shadow-sm"
-                          : "bg-white border-border/60 hover:bg-muted/40 text-primary"
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Right side: Sorting & Badge Count */}
-                <div className="flex items-center justify-between sm:justify-end gap-4">
+                {/* 4. Smart Filter + Sort Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 shadow-inner">
                   
-                  {/* Active Filter Count Badge */}
-                  {activeFiltersCount > 0 && (
-                    <div className="flex items-center space-x-2 shrink-0">
-                      <span className="bg-[#0F6E56] text-white text-[10px] font-black rounded-full px-2 py-0.5 shadow-sm">
-                        {activeFiltersCount} Active
-                      </span>
-                      <button
-                        onClick={handleClearAllFilters}
-                        className="text-[10px] font-black uppercase text-red-600 hover:text-red-700 hover:underline cursor-pointer"
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="flex items-center space-x-2 text-xs">
-                    <span className="text-muted-foreground text-xs shrink-0">Sort by:</span>
-                    <select
-                      value={sortBy}
-                      onChange={(e: any) => setSortBy(e.target.value)}
-                      className="bg-card border border-border/60 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary text-xs font-semibold cursor-pointer"
-                    >
-                      <option value="newest">Newest Additions</option>
-                      <option value="popular">Popularity</option>
-                      <option value="rating">Review Count</option>
-                      <option value="best-rated">Highest Rated</option>
-                      <option value="price-asc">Price: Low to High</option>
-                      <option value="price-desc">Price: High to Low</option>
-                      <option value="eco-score">Eco Score: High to Low</option>
-                    </select>
+                  {/* Left: Showing Products Label */}
+                  <div className="text-left select-none">
+                    <span className="text-xs font-bold text-slate-500">
+                      Showing <span className="text-[#0F6E56] font-black">{products.length}</span> products
+                    </span>
                   </div>
+
+                  {/* Right side: Sorting & Badge Count */}
+                  <div className="flex items-center justify-between sm:justify-end gap-4">
+                    
+                    {/* Active Filter Count Badge */}
+                    {activeFiltersCount > 0 && (
+                      <div className="flex items-center space-x-2 shrink-0">
+                        <span className="bg-[#0F6E56] text-white text-[10px] font-black rounded-full px-2 py-0.5 shadow-sm">
+                          {activeFiltersCount} Active
+                        </span>
+                        <button
+                          onClick={handleClearAllFilters}
+                          className="text-[10px] font-black uppercase text-red-500 hover:text-red-750 hover:underline cursor-pointer border-none bg-transparent"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex items-center space-x-2 text-xs">
+                      <span className="text-slate-400 font-medium shrink-0">Sort by:</span>
+                      <select
+                        value={sortBy}
+                        onChange={(e: any) => setSortBy(e.target.value)}
+                        className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#0F6E56] text-xs font-semibold cursor-pointer text-slate-800"
+                      >
+                        <option value="newest">Newest Additions</option>
+                        <option value="popular">Popularity</option>
+                        <option value="rating">Review Count</option>
+                        <option value="best-rated">Highest Rated</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                        <option value="eco-score">Eco Score: High to Low</option>
+                      </select>
+                    </div>
+                  </div>
+
                 </div>
 
+                {/* Catalog grid / Skeletons */}
+                {loading ? (
+                  <ProductSkeleton />
+                ) : products.length === 0 ? (
+                  <EmptyState onClear={handleClearAllFilters} />
+                ) : (
+                  <FadeInStagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {products.map((p) => (
+                      <FadeInStaggerItem key={p.id}>
+                        <ProductCard
+                          product={p}
+                          onAddToCart={handleAddToCartAction}
+                          onQuickView={handleOpenQuickView}
+                        />
+                      </FadeInStaggerItem>
+                    ))}
+                  </FadeInStagger>
+                )}
               </div>
 
-              {/* Catalog grid / Skeletons */}
-              {loading ? (
-                <ProductSkeleton />
-              ) : products.length === 0 ? (
-                <EmptyState onClear={handleClearAllFilters} />
-              ) : (
-                <FadeInStagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {products.map((p) => (
-                    <FadeInStaggerItem key={p.id}>
-                      <ProductCard
-                        product={p}
-                        onAddToCart={handleAddToCartAction}
-                        onQuickView={handleOpenQuickView}
-                      />
-                    </FadeInStaggerItem>
-                  ))}
-                </FadeInStagger>
-              )}
             </div>
 
           </div>
 
-          {/* Testimonials Section also in catalog mode */}
-          <TestimonialsSection />
+          {/* Testimonials Section */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+            <TestimonialsSection />
+          </div>
 
         </div>
       )}

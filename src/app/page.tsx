@@ -9,6 +9,7 @@ import { ShieldCheck, Award, Leaf, ArrowRight, ArrowUpRight, RefreshCw, ChevronR
 import DisplayCards from "@/components/ui/display-cards";
 import ScrollGlobe from "@/components/ui/scroll-globe";
 import { useCart } from "@/context/CartContext";
+import { getProducts, ProductItem } from "@/actions/products";
 
 const CATEGORIES = [
   {
@@ -331,6 +332,47 @@ export default function Homepage() {
   const [selectedWowProduct, setSelectedWowProduct] = useState(SUSTAINABILITY_DATA[0]);
   const [purchaseQuantity, setPurchaseQuantity] = useState(50);
 
+  // Convert FEATURED_PRODUCTS to a compatible format for initial rendering
+  const initialProducts: ProductItem[] = FEATURED_PRODUCTS.map((p) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    description: "",
+    price: p.price,
+    stock: 10,
+    sustainabilityScore: p.sustainabilityScore,
+    sustainabilityDetail: "",
+    images: [p.image],
+    category: p.category,
+    categoryId: "",
+    isApproved: true,
+    sellerId: p.sellerId,
+    seller: {
+      id: p.sellerId,
+      companyName: p.sellerName,
+      badges: [],
+    },
+    certifications: [],
+    rating: 4.8,
+    reviewsCount: 12,
+  }));
+
+  const [products, setProducts] = useState<ProductItem[]>(initialProducts);
+
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        const fetched = await getProducts();
+        if (fetched && fetched.length > 0) {
+          setProducts(fetched);
+        }
+      } catch (err) {
+        console.error("Failed to load products from DB:", err);
+      }
+    }
+    loadProducts();
+  }, []);
+
   const sections = [
     {
       id: "hero",
@@ -447,61 +489,65 @@ export default function Homepage() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {FEATURED_PRODUCTS.map((item) => (
-                <div 
-                  key={item.id}
-                  className="group relative bg-card border border-border/40 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_24px_rgba(23,53,40,0.1),0_0_15px_rgba(34,197,94,0.1)] flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="aspect-square relative overflow-hidden bg-muted/20">
-                      <img 
-                        src={item.image} 
-                        alt={item.name} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute top-2 left-2 flex flex-col gap-1.5 items-start">
-                        <span className="bg-[#173528]/95 text-white text-[8px] font-extrabold uppercase px-2 py-0.5 rounded-md tracking-wider shadow-sm">
-                          {item.category}
-                        </span>
-                        <span className="bg-emerald-600 text-white text-[8px] font-extrabold px-2 py-0.5 rounded-md tracking-wider flex items-center gap-0.5 shadow-sm">
-                          <Leaf className="h-2.5 w-2.5 fill-white stroke-none" />
-                          <span>Eco Score: {item.sustainabilityScore}</span>
-                        </span>
+              {products.slice(0, 12).map((item) => {
+                const itemImage = item.images?.[0] || "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400";
+                const sellerName = item.seller?.companyName || "Earth Centric";
+                return (
+                  <div 
+                    key={item.id}
+                    className="group relative bg-card border border-border/40 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_24px_rgba(23,53,40,0.1),0_0_15px_rgba(34,197,94,0.1)] flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="aspect-square relative overflow-hidden bg-muted/20">
+                        <img 
+                          src={itemImage} 
+                          alt={item.name} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute top-2 left-2 flex flex-col gap-1.5 items-start">
+                          <span className="bg-[#173528]/95 text-white text-[8px] font-extrabold uppercase px-2 py-0.5 rounded-md tracking-wider shadow-sm">
+                            {item.category}
+                          </span>
+                          <span className="bg-emerald-600 text-white text-[8px] font-extrabold px-2 py-0.5 rounded-md tracking-wider flex items-center gap-0.5 shadow-sm">
+                            <Leaf className="h-2.5 w-2.5 fill-white stroke-none" />
+                            <span>Eco Score: {item.sustainabilityScore}</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-4 space-y-1.5 text-left">
+                        <p className="text-[9px] font-bold text-accent uppercase tracking-wider">{sellerName}</p>
+                        <Link href={`/products/${item.id}`}>
+                          <h4 className="text-xs font-bold text-primary line-clamp-2 group-hover:text-emerald-600 transition-colors cursor-pointer min-h-[32px]">{item.name}</h4>
+                        </Link>
+                        <p className="text-sm font-black text-primary">₹{item.price.toLocaleString()}</p>
                       </div>
                     </div>
-                    <div className="p-4 space-y-1.5 text-left">
-                      <p className="text-[9px] font-bold text-accent uppercase tracking-wider">{item.sellerName}</p>
-                      <Link href={`/marketplace`}>
-                        <h4 className="text-xs font-bold text-primary line-clamp-2 group-hover:text-emerald-600 transition-colors cursor-pointer min-h-[32px]">{item.name}</h4>
-                      </Link>
-                      <p className="text-sm font-black text-primary">₹{item.price.toLocaleString()}</p>
+                    <div className="px-4 pb-4 pt-0">
+                      <Button 
+                        onClick={() => {
+                          addToCart({
+                            id: item.id,
+                            name: item.name,
+                            price: item.price,
+                            image: itemImage,
+                            sustainabilityScore: item.sustainabilityScore,
+                            sellerName: sellerName,
+                            sellerId: item.sellerId,
+                          }, 1);
+                          setAddedItemName(item.name);
+                          setTimeout(() => setAddedItemName(null), 2000);
+                        }}
+                        size="sm"
+                        variant="cool"
+                        className="w-full text-[9px] font-bold py-1.5 flex items-center justify-center space-x-1"
+                      >
+                        <ShoppingBag className="h-3 w-3" />
+                        <span>Add to Cart</span>
+                      </Button>
                     </div>
                   </div>
-                  <div className="px-4 pb-4 pt-0">
-                    <Button 
-                      onClick={() => {
-                        addToCart({
-                          id: item.id,
-                          name: item.name,
-                          price: item.price,
-                          image: item.image,
-                          sustainabilityScore: item.sustainabilityScore,
-                          sellerName: item.sellerName,
-                          sellerId: item.sellerId,
-                        }, 1);
-                        setAddedItemName(item.name);
-                        setTimeout(() => setAddedItemName(null), 2000);
-                      }}
-                      size="sm"
-                      variant="cool"
-                      className="w-full text-[9px] font-bold py-1.5 flex items-center justify-center space-x-1"
-                    >
-                      <ShoppingBag className="h-3 w-3" />
-                      <span>Add to Cart</span>
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

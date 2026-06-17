@@ -3,17 +3,18 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, ShoppingBag, Eye, Star, Leaf, ShieldCheck } from "lucide-react";
-import { Badge, Button } from "@/components/ui/shared";
+import { useRouter } from "next/navigation";
+import { Heart, ShoppingBag, Star, Leaf } from "lucide-react";
 import { ProductItem } from "@/actions/products";
 
 interface ProductCardProps {
   product: ProductItem;
   onAddToCart: (e: React.MouseEvent, p: ProductItem) => void;
-  onQuickView: (p: ProductItem) => void;
+  onQuickView?: (p: ProductItem) => void;
 }
 
 export default function ProductCard({ product, onAddToCart, onQuickView }: ProductCardProps) {
+  const router = useRouter();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   // Check wishlist state on mount
@@ -41,119 +42,127 @@ export default function ProductCard({ product, onAddToCart, onQuickView }: Produ
   };
 
   // Compute pricing details
-  const originalPrice = product.price > 500 ? Math.round(product.price * 1.25) : undefined;
+  const originalPrice = product.price > 500 ? Math.round(product.price * 1.25) : Math.round(product.price * 1.5);
   const discountPercent = originalPrice ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : undefined;
 
-  // Determine color for Eco Score Badge
+  // Determine status badge class and label
   const ecoScore = product.sustainabilityScore;
-  let scoreBadgeColorClass = "bg-gray-500 text-white";
-  if (ecoScore >= 90) {
-    scoreBadgeColorClass = "bg-emerald-600 text-white";
-  } else if (ecoScore >= 75) {
-    scoreBadgeColorClass = "bg-amber-500 text-white";
+  const badgeType = product.badgeType || (ecoScore >= 97 ? "verified" : ecoScore >= 94 ? "bestseller" : "eco");
+
+  let badgeLabel = "Eco";
+  let badgeStyle = "bg-[#ebf5f0] text-[#0F6E56] border border-[#d2e8dd]";
+  let badgeIcon = <Leaf className="h-3 w-3 fill-[#0F6E56] stroke-none" />;
+
+  if (badgeType === "verified") {
+    badgeLabel = "Verified";
+    badgeStyle = "bg-[#0ea5e9] text-white border border-[#0284c7]";
+    badgeIcon = <span className="text-[10px] font-bold">✓</span>;
+  } else if (badgeType === "bestseller") {
+    badgeLabel = "Best Seller";
+    badgeStyle = "bg-[#0F6E56] text-white border border-[#0b5442]";
+    badgeIcon = <Star className="h-3 w-3 fill-white stroke-none" />;
   }
 
   return (
-    <div className="group relative bg-card border border-border/40 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_12px_24px_rgba(23,53,40,0.1),0_0_15px_rgba(34,197,94,0.08)] flex flex-col justify-between h-full cursor-pointer">
-      <div>
+    <div 
+      onClick={() => router.push(`/products/${product.id}`)}
+      className="group bg-white border border-slate-100 rounded-3xl p-4 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_24px_rgba(15,110,86,0.08)] flex flex-col justify-between h-full cursor-pointer select-none"
+    >
+      <div className="space-y-4">
         {/* Image Container with overlays */}
-        <div className="aspect-square relative overflow-hidden bg-muted/20">
-          <Image 
-            src={product.images[0] || "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400"} 
-            alt={product.name} 
-            fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
-            priority={false}
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+        <div className="aspect-square relative overflow-hidden bg-[#ebf3ef] rounded-2xl flex items-center justify-center p-6">
+          <div className="relative w-full h-full">
+            <Image 
+              src={product.images[0] || "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400"} 
+              alt={product.name} 
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
+              priority={false}
+              className="object-contain transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
 
-          {/* Eco Score Overlay (Top-Left) */}
-          <span className={`absolute top-2 left-2 text-[8px] font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider flex items-center gap-0.5 shadow-md z-10 ${scoreBadgeColorClass}`}>
-            <Leaf className="h-2 w-2 fill-white stroke-none" />
-            <span>Eco: {ecoScore}</span>
-          </span>
-
-          {/* Wishlist Heart Overlay (Top-Right) */}
-          <button
-            onClick={handleToggleWishlist}
-            className="absolute top-2 right-2 h-7 w-7 rounded-full bg-white/90 backdrop-blur-sm border border-border/10 flex items-center justify-center text-[#173528] hover:text-red-500 hover:scale-110 active:scale-95 transition-all shadow-sm cursor-pointer z-10"
-            aria-label="Add to wishlist"
-          >
-            <Heart className={`h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
-          </button>
-
-          {/* Discount Tag (Top-Right adjacent to Wishlist) */}
+          {/* Discount Tag (Top-Left) */}
           {discountPercent && (
-            <span className="absolute top-2 right-10 bg-red-600 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded shadow-sm z-10">
-              {discountPercent}% OFF
+            <span className="absolute top-3 left-3 bg-[#FF4D4D] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-lg shadow-sm z-10">
+              -{discountPercent}%
             </span>
           )}
 
-          {/* Hover Slide-up Actions Overlay */}
-          <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/60 to-transparent flex gap-2 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10">
-            <Button
-              onClick={(e) => onAddToCart(e, product)}
-              size="sm"
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-bold py-1.5 flex items-center justify-center space-x-1 border-none shadow-sm rounded-lg"
-            >
-              <ShoppingBag className="h-3 w-3" />
-              <span>Add to Cart</span>
-            </Button>
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onQuickView(product);
-              }}
-              size="sm"
-              variant="outline"
-              className="h-8 w-8 p-0 bg-white/95 text-primary border-none hover:bg-emerald-600 hover:text-white rounded-lg flex items-center justify-center shadow-sm"
-              title="Quick View"
-            >
-              <Eye className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+          {/* Status Badge (Top-Right) */}
+          <span className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm z-10 ${badgeStyle}`}>
+            {badgeIcon}
+            <span>{badgeLabel}</span>
+          </span>
+
+          {/* Wishlist Heart Overlay (Bottom-Right of image container) */}
+          <button
+            onClick={handleToggleWishlist}
+            className="absolute bottom-3 right-3 h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-md border border-slate-50 hover:scale-105 active:scale-95 transition-all cursor-pointer z-10"
+            aria-label="Add to wishlist"
+          >
+            <Heart className={`h-4.5 w-4.5 transition-colors ${isWishlisted ? "fill-red-500 text-red-500" : "text-slate-400 hover:text-red-500"}`} />
+          </button>
         </div>
 
         {/* Details Section */}
-        <div className="p-4 space-y-2 text-left">
-          {/* Seller / Trust Micro-Badge */}
-          <div className="space-y-0.5">
-            <p className="text-[9px] font-bold text-accent uppercase tracking-wider flex items-center truncate">
-              <span className="truncate mr-1">{product.seller.companyName}</span>
-              {product.seller.badges?.includes("Verified Business") && (
-                <ShieldCheck className="h-3 w-3 text-emerald-600 shrink-0" />
-              )}
-            </p>
-            <div className="flex items-center text-[7px] font-extrabold text-emerald-700 uppercase tracking-widest leading-none">
-              <span>Verified Sustainable</span>
-            </div>
-          </div>
+        <div className="space-y-2 text-left">
+          {/* Category • Seller Label */}
+          <p className="text-[10px] font-extrabold text-[#0F6E56] uppercase tracking-wider">
+            {product.category} • {product.seller.companyName}
+          </p>
 
           {/* Product Title */}
-          <Link href={`/products/${product.id}`} className="block">
-            <h4 className="text-xs font-bold text-primary line-clamp-1 group-hover:text-emerald-600 transition-colors">
+          <Link href={`/products/${product.id}`} className="block" onClick={(e) => e.stopPropagation()}>
+            <h4 className="text-sm font-black text-slate-800 leading-snug line-clamp-2 hover:text-[#0F6E56] transition-colors min-h-[40px]">
               {product.name}
             </h4>
           </Link>
 
+          {/* Description */}
+          <p className="text-[11px] text-slate-400 font-medium line-clamp-1">
+            {product.description}
+          </p>
+
+          {/* Eco Score Progress Bar */}
+          <div className="flex items-center text-[10px] font-extrabold text-[#0F6E56] bg-[#ebf5f0] rounded-xl px-2.5 py-1.5 border border-[#d2e8dd]/40">
+            <span className="shrink-0 flex items-center gap-0.5">🌱 Eco Score</span>
+            <div className="flex-1 mx-2 h-1 bg-slate-200/80 rounded-full overflow-hidden">
+              <div className="h-full bg-[#0F6E56] rounded-full transition-all duration-500" style={{ width: `${ecoScore}%` }} />
+            </div>
+            <span className="shrink-0 font-black">{ecoScore}/100</span>
+          </div>
+
           {/* Stars & Reviews */}
-          <div className="flex items-center space-x-0.5 text-[10px] text-amber-500 font-semibold leading-none">
-            <Star className="h-3 w-3 fill-amber-500 stroke-none" />
+          <div className="flex items-center space-x-1 text-xs font-semibold text-slate-800">
+            <Star className="h-3.5 w-3.5 fill-[#EAB308] stroke-none" />
             <span>{product.rating.toFixed(1)}</span>
-            <span className="text-muted-foreground text-[8px] font-medium ml-0.5">({product.reviewsCount})</span>
+            <span className="text-slate-400 font-medium">({product.reviewsCount} reviews)</span>
           </div>
         </div>
       </div>
 
-      {/* Footer / Pricing details */}
-      <div className="p-4 pt-0 text-left flex items-baseline space-x-2 border-t border-border/10 mt-1">
-        <span className="text-sm font-black text-primary">₹{product.price.toLocaleString()}</span>
-        {originalPrice && (
-          <span className="text-[10px] font-semibold text-muted-foreground line-through">
-            ₹{originalPrice.toLocaleString()}
-          </span>
-        )}
+      {/* Footer / Pricing & Cart */}
+      <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-4 text-left">
+        <div className="flex items-baseline space-x-1.5">
+          <span className="text-base font-black text-slate-900">₹{product.price.toLocaleString()}</span>
+          {originalPrice && (
+            <span className="text-xs text-slate-400 font-semibold line-through">
+              ₹{originalPrice.toLocaleString()}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onAddToCart(e, product);
+          }}
+          className="h-8 w-8 rounded-full bg-[#0F6E56] hover:bg-[#0c5a46] text-white flex items-center justify-center transition-colors cursor-pointer border-none shadow-sm"
+          title="Add to Cart"
+        >
+          <ShoppingBag className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );

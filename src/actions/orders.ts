@@ -212,12 +212,28 @@ export async function confirmOrderPayment(
   userEmail: string
 ): Promise<boolean> {
   // 1. Verify Signature
-  const order = mockOrders.find((o) => o.id === orderId);
-  const razorpayOrderId = order ? order.razorpayOrderId : "";
-  const isValid = verifyPaymentSignature(razorpayOrderId || "", razorpayPaymentId, signature);
+  let razorpayOrderId = "";
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("mock")) {
+    const order = mockOrders.find((o) => o.id === orderId);
+    razorpayOrderId = order ? order.razorpayOrderId || "" : "";
+  } else {
+    try {
+      const dbPayment = await db.payment.findFirst({
+        where: { orderId: orderId },
+        select: { razorpayOrderId: true },
+      });
+      razorpayOrderId = dbPayment?.razorpayOrderId || "";
+    } catch (e) {
+      console.warn("Failed to retrieve payment from database, checking mock:", e);
+      const order = mockOrders.find((o) => o.id === orderId);
+      razorpayOrderId = order ? order.razorpayOrderId || "" : "";
+    }
+  }
+
+  const isValid = verifyPaymentSignature(razorpayOrderId, razorpayPaymentId, signature);
 
   if (!isValid) {
-    console.error("Signature verification failed for order", orderId);
+    console.error("Signature verification failed for order", orderId, "with razorpayOrderId", razorpayOrderId);
     return false;
   }
 

@@ -24,6 +24,8 @@ import {
   Plus,
   Minus,
   Search,
+  Heart,
+  MapPin,
 } from "lucide-react";
 
 interface NavbarSearchProps {
@@ -113,121 +115,90 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md transition-colors duration-300">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 text-primary font-bold text-lg select-none">
-            <Leaf className="h-5 w-5 fill-accent stroke-primary" />
-            <span className="font-semibold tracking-tight text-primary dark:text-foreground">EARTHCENTRIC</span>
-          </Link>
+      {/* 1. Announcement Bar */}
+      <div className="w-full bg-[#0F6E56] text-white text-[11px] font-bold py-2.5 px-4 flex items-center justify-center space-x-2 border-b border-white/10 select-none overflow-x-auto whitespace-nowrap scrollbar-none">
+        <span className="flex items-center gap-1">💸 Free shipping on orders above ₹499</span>
+        <span className="text-white/40">|</span>
+        <span className="flex items-center gap-1">🛡️ All sellers are sustainability-verified</span>
+        <span className="text-white/40">|</span>
+        <span className="flex items-center gap-1">🌍 10% of profits go to reforestation</span>
+      </div>
 
-          {/* Desktop Nav links */}
-          <nav className="hidden md:flex space-x-8 text-sm font-medium">
-            <Link
-              href="/marketplace"
-              className={
-                pathname === "/marketplace"
-                  ? "text-primary dark:text-foreground font-semibold"
-                  : "text-muted-foreground hover:text-foreground transition-colors"
-              }
-            >
-              Marketplace
+      <header className="sticky top-0 z-40 w-full border-b border-slate-100 bg-white transition-colors duration-300">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 gap-4">
+          
+          {/* Logo & Location Container */}
+          <div className="flex items-center space-x-6 shrink-0">
+            {/* Logo */}
+            <Link href="/" className="flex items-center space-x-1.5 select-none cursor-pointer">
+              <div className="bg-[#0F6E56]/10 p-1.5 rounded-lg text-[#0F6E56]">
+                <Leaf className="h-6 w-6 fill-[#0F6E56] stroke-none" />
+              </div>
+              <span className="font-serif tracking-tight font-black text-xl text-slate-800 hidden sm:inline-block">Earth Centric</span>
             </Link>
-            <Link
-              href="/#categories"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Categories
-            </Link>
-            <Link
-              href="/#impact-tracker"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Impact Tracker
-            </Link>
-            <Link
-              href="/#verified-sellers"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Verified Sellers
-            </Link>
-            <Link
-              href="/blog"
-              className={
-                pathname === "/blog"
-                  ? "text-primary dark:text-foreground font-semibold"
-                  : "text-muted-foreground hover:text-foreground transition-colors"
-              }
-            >
-              Blog
-            </Link>
-            <Link
-              href="/#sustainability-mission"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              About
-            </Link>
-          </nav>
 
-          {/* Desktop Search Bar Trigger */}
-          <div className="hidden md:flex items-center flex-1 w-full max-w-[180px] lg:max-w-[260px] mx-4 lg:mx-8">
-            <div 
-              onClick={() => setIsSpotlightOpen(true)}
-              className="w-full relative cursor-pointer group"
-            >
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/60 group-hover:text-primary transition-colors" />
-              <div className="w-full bg-muted/40 hover:bg-muted/60 border border-border/40 rounded-full pl-9 pr-4 py-1.5 text-xs text-muted-foreground/50 select-none transition-all flex items-center justify-between">
-                <span>Search products...</span>
-                <span className="text-[9px] bg-muted/70 px-1.5 py-0.5 rounded border border-border/20 text-muted-foreground/70 font-semibold tracking-widest">⌘K</span>
+            {/* Location */}
+            <div className="hidden lg:flex items-center space-x-1 select-none text-left">
+              <MapPin className="h-4 w-4 text-[#0F6E56] shrink-0" />
+              <div className="flex flex-col text-[10px] leading-tight">
+                <span className="text-slate-400 font-semibold">Deliver to</span>
+                <span className="text-slate-800 font-bold">India IN</span>
               </div>
             </div>
           </div>
 
+          {/* Integrated Search Box */}
+          <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl hidden md:flex items-center border border-slate-200 rounded-xl overflow-hidden bg-slate-50 focus-within:ring-1 focus-within:ring-[#0F6E56] focus-within:border-[#0F6E56] focus-within:bg-white transition-all shadow-inner h-10">
+            <div className="flex items-center px-4 py-2 border-r border-slate-200 text-xs font-bold text-slate-500 select-none cursor-pointer bg-slate-100 hover:bg-slate-150 transition-colors h-full">
+              <span>All</span>
+              <ChevronDown className="ml-1 h-3.5 w-3.5" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search eco-friendly products, brands, categories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="flex-1 bg-transparent px-4 py-2 text-xs text-slate-800 placeholder:text-slate-450 focus:outline-none h-full"
+            />
+            <button type="submit" className="bg-[#0F6E56] hover:bg-[#0c5a46] text-white px-5 flex items-center justify-center transition-colors cursor-pointer border-none h-full">
+              <Search className="h-4 w-4" />
+            </button>
+          </form>
+
           {/* Right Action Items */}
-          <div className="flex items-center space-x-4">
-            {/* Shopping Cart Trigger */}
-            <ScaleHover>
-              <button
-                onClick={() => setIsCartOpen(true)}
-                className="relative p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                <ShoppingBag className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground animate-pulse">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-            </ScaleHover>
+          <div className="flex items-center space-x-6 shrink-0">
+            
+            {/* Wishlist Link */}
+            <Link href="/marketplace" className="hidden sm:flex flex-col items-center justify-center text-slate-500 hover:text-[#0F6E56] transition-colors cursor-pointer select-none">
+              <Heart className="h-5 w-5" />
+              <span className="text-[10px] font-bold mt-1">Wishlist</span>
+            </Link>
 
             {/* User Account Dropdown */}
             {user ? (
               <div className="relative">
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center space-x-1.5 focus:outline-none cursor-pointer"
+                  className="flex flex-col items-center justify-center text-slate-500 hover:text-[#0F6E56] transition-colors cursor-pointer select-none border-none bg-transparent"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 border border-primary/20 text-primary">
-                    <UserIcon className="h-4 w-4" />
-                  </div>
-                  <span className="hidden sm:inline text-sm font-medium hover:text-primary dark:hover:text-foreground max-w-[120px] truncate">
+                  <UserIcon className="h-5 w-5" />
+                  <span className="text-[10px] font-bold mt-1 max-w-[80px] truncate">
                     {user.name.split(" ")[0]}
                   </span>
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
 
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-52 rounded-lg border border-border bg-card p-1.5 shadow-lg z-50">
-                    <div className="px-3 py-2 border-b border-border/30 mb-1">
-                      <p className="text-sm font-semibold truncate">{user.name}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+                  <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-100 bg-white p-1.5 shadow-lg z-50 text-left">
+                    <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{user.name}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
                     </div>
 
                     {user.role === "BUYER" && (
                       <>
                         <Link
                           href="/marketplace"
-                          className="flex w-full items-center space-x-2 rounded px-3 py-2 text-left text-sm hover:bg-muted/50"
+                          className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                           onClick={() => setIsProfileOpen(false)}
                         >
                           <ShoppingBag className="h-4 w-4" />
@@ -235,7 +206,7 @@ export default function Navbar() {
                         </Link>
                         <Link
                           href="/seller/verification"
-                          className="flex w-full items-center space-x-2 rounded px-3 py-2 text-left text-sm hover:bg-muted/50"
+                          className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                           onClick={() => setIsProfileOpen(false)}
                         >
                           <Building className="h-4 w-4" />
@@ -247,7 +218,7 @@ export default function Navbar() {
                     {user.role === "SELLER" && (
                       <Link
                         href={user.sellerStatus === "APPROVED" ? "/seller/dashboard" : "/seller/verification"}
-                        className="flex w-full items-center space-x-2 rounded px-3 py-2 text-left text-sm hover:bg-muted/50"
+                        className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                         onClick={() => setIsProfileOpen(false)}
                       >
                         <Building className="h-4 w-4" />
@@ -258,7 +229,7 @@ export default function Navbar() {
                     {user.role === "ADMIN" && (
                       <Link
                         href="/admin/dashboard"
-                        className="flex w-full items-center space-x-2 rounded px-3 py-2 text-left text-sm hover:bg-muted/50"
+                        className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
                         onClick={() => setIsProfileOpen(false)}
                       >
                         <ShieldCheck className="h-4 w-4" />
@@ -271,7 +242,7 @@ export default function Navbar() {
                         logout();
                         setIsProfileOpen(false);
                       }}
-                      className="flex w-full items-center space-x-2 rounded px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-500/5"
+                      className="flex w-full items-center space-x-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Log Out</span>
@@ -281,75 +252,139 @@ export default function Navbar() {
               </div>
             ) : (
               <Link href="/auth/login">
-                <Button variant="cool" size="sm">
-                  Sign In
-                </Button>
+                <div className="flex flex-col items-center justify-center text-slate-500 hover:text-[#0F6E56] transition-colors cursor-pointer select-none">
+                  <UserIcon className="h-5 w-5" />
+                  <span className="text-[10px] font-bold mt-1">Account</span>
+                </div>
               </Link>
             )}
+
+            {/* Shopping Cart Trigger */}
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="relative flex flex-col items-center justify-center text-slate-500 hover:text-[#0F6E56] transition-colors cursor-pointer select-none border-none bg-transparent"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#0F6E56] text-[10px] font-bold text-white animate-pulse">
+                  {cartCount}
+                </span>
+              )}
+              <span className="text-[10px] font-bold mt-1">Cart</span>
+            </button>
+
+            {/* Start Selling Button */}
+            <Link href="/seller/verification" className="hidden sm:inline-block">
+              <button className="bg-[#0F6E56] hover:bg-[#0c5a46] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-colors cursor-pointer border-none shadow-sm">
+                Start Selling
+              </button>
+            </Link>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-muted-foreground hover:text-foreground md:hidden cursor-pointer"
+              className="p-2 text-slate-500 hover:text-slate-800 md:hidden cursor-pointer border-none bg-transparent"
             >
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
 
+        {/* 2. Sub-Navbar Section (Dark Forest Green) */}
+        <div className="w-full bg-[#0c3c26] text-slate-100 text-xs py-2.5 px-4 sm:px-6 lg:px-8 shadow-md flex items-center justify-between border-t border-emerald-950 select-none overflow-x-auto whitespace-nowrap scrollbar-none">
+          <div className="flex items-center space-x-6">
+            {/* All Categories Dropdown Button */}
+            <button className="flex items-center space-x-2 text-white font-bold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs cursor-pointer border-none">
+              <Menu className="h-4 w-4" />
+              <span>All Categories</span>
+            </button>
+
+            {/* Nav links */}
+            <nav className="flex items-center space-x-6 text-xs font-semibold">
+              <Link href="/marketplace" className="text-white hover:text-emerald-400 transition-colors">
+                Marketplace
+              </Link>
+              <Link href="/#verified-sellers" className="text-slate-200 hover:text-emerald-400 transition-colors">
+                Verified Sellers
+              </Link>
+              <Link href="/marketplace?sort=popular" className="text-slate-200 hover:text-emerald-400 transition-colors">
+                Deals
+              </Link>
+              <Link href="/marketplace?sort=newest" className="text-slate-200 hover:text-emerald-400 transition-colors">
+                New Arrivals
+              </Link>
+              <Link href="/#sustainability-mission" className="text-slate-200 hover:text-emerald-400 transition-colors">
+                About
+              </Link>
+            </nav>
+          </div>
+
+          {/* Quick pills */}
+          <div className="hidden md:flex items-center space-x-3">
+            <Link href="/marketplace?sort=popular" className="bg-white/10 hover:bg-white/20 border border-white/15 text-white rounded-full px-3 py-1 text-[11px] font-semibold transition-all">
+              🔥 Today's Deals
+            </Link>
+            <Link href="/marketplace?sort=newest" className="bg-white/10 hover:bg-white/20 border border-white/15 text-white rounded-full px-3 py-1 text-[11px] font-semibold transition-all">
+              New Arrivals
+            </Link>
+            <Link href="/marketplace?sort=popular" className="bg-white/10 hover:bg-white/20 border border-white/15 text-white rounded-full px-3 py-1 text-[11px] font-semibold transition-all">
+              🏷️ Offers
+            </Link>
+          </div>
+        </div>
+
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border/40 bg-background px-4 py-4 space-y-3 z-30">
-            {/* Mobile Search Bar Trigger */}
-            <div 
-              onClick={() => { setIsSpotlightOpen(true); setIsMobileMenuOpen(false); }}
-              className="relative pb-2 cursor-pointer"
-            >
-              <div className="w-full relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/60" />
-                <div className="w-full bg-muted/40 border border-border/40 rounded-full pl-9 pr-4 py-2 text-xs text-muted-foreground/50 select-none">
-                  Search sustainable products...
-                </div>
-              </div>
-            </div>
+          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-4 space-y-3 shadow-md z-30 relative">
+            {/* Mobile Search Input */}
+            <form onSubmit={handleSearchSubmit} className="relative pb-2">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-full pl-9 pr-4 py-2 text-xs text-slate-800 placeholder:text-slate-400/80 focus:outline-none focus:ring-1 focus:ring-[#0F6E56]"
+              />
+            </form>
             <Link
               href="/marketplace"
-              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
+              className="block text-base font-medium py-2 border-b border-slate-50 text-slate-800 hover:text-[#0F6E56]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Marketplace
             </Link>
             <Link
               href="/#categories"
-              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
+              className="block text-base font-medium py-2 border-b border-slate-50 text-slate-800 hover:text-[#0F6E56]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Categories
             </Link>
             <Link
               href="/#impact-tracker"
-              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
+              className="block text-base font-medium py-2 border-b border-slate-50 text-slate-800 hover:text-[#0F6E56]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Impact Tracker
             </Link>
             <Link
               href="/#verified-sellers"
-              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
+              className="block text-base font-medium py-2 border-b border-slate-50 text-slate-800 hover:text-[#0F6E56]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Verified Sellers
             </Link>
             <Link
               href="/blog"
-              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
+              className="block text-base font-medium py-2 border-b border-slate-50 text-slate-800 hover:text-[#0F6E56]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Blog
             </Link>
             <Link
               href="/#sustainability-mission"
-              className="block text-base font-medium py-2 border-b border-border/20 text-foreground"
+              className="block text-base font-medium py-2 border-b border-slate-50 text-slate-800 hover:text-[#0F6E56]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               About
