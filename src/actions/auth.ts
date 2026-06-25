@@ -2,6 +2,7 @@
 
 import db from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/email";
+import { uploadImage, deleteImage, getPublicIdFromDb } from "@/lib/cloudinary";
 
 export async function syncUserInDb(userData: {
   id: string;
@@ -61,4 +62,35 @@ export async function syncUserInDb(userData: {
     console.error("Failed to sync user in database:", error);
     return null;
   }
+}
+
+export async function updateUserProfilePicture(userId: string, base64Image: string): Promise<string> {
+  const resultJson = await uploadImage(base64Image, "buyer-profile");
+  
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("mock")) {
+    return resultJson;
+  }
+  
+  try {
+    const existingUser = await db.user.findUnique({
+      where: { id: userId },
+      select: { image: true }
+    });
+    
+    if (existingUser && existingUser.image) {
+      const oldPublicId = getPublicIdFromDb(existingUser.image);
+      if (oldPublicId) {
+        await deleteImage(oldPublicId);
+      }
+    }
+    
+    await db.user.update({
+      where: { id: userId },
+      data: { image: resultJson }
+    });
+  } catch (error) {
+    console.error("Failed to update user profile image in DB:", error);
+  }
+  
+  return resultJson;
 }

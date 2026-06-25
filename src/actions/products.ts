@@ -1,6 +1,7 @@
 "use server";
 
 import db from "@/lib/db";
+import { uploadImage, deleteImage, getUrlFromDb, getPublicIdFromDb } from "@/lib/cloudinary";
 
 export interface ProductFilter {
   category?: string;
@@ -540,7 +541,7 @@ export async function getProducts(filters: ProductFilter = {}): Promise<ProductI
         stock: p.stock,
         sustainabilityScore: p.sustainabilityScore,
         sustainabilityDetail: p.sustainabilityDetail || "",
-        images: p.images.map((img) => img.url),
+        images: p.images.map((img) => getUrlFromDb(img.url)),
         category: p.category.name,
         categoryId: p.categoryId,
         isApproved: p.isApproved,
@@ -549,7 +550,7 @@ export async function getProducts(filters: ProductFilter = {}): Promise<ProductI
           id: p.seller.id,
           companyName: p.seller.companyName,
           badges: p.seller.badges,
-          logoUrl: p.seller.logoUrl || undefined,
+          logoUrl: getUrlFromDb(p.seller.logoUrl) || undefined,
         },
         certifications: [], // dynamically loaded
         rating,
@@ -598,7 +599,7 @@ export async function getProductById(id: string): Promise<ProductItem | null> {
       stock: p.stock,
       sustainabilityScore: p.sustainabilityScore,
       sustainabilityDetail: p.sustainabilityDetail || "",
-      images: p.images.map((img) => img.url),
+      images: p.images.map((img) => getUrlFromDb(img.url)),
       category: p.category.name,
       categoryId: p.categoryId,
       isApproved: p.isApproved,
@@ -607,7 +608,7 @@ export async function getProductById(id: string): Promise<ProductItem | null> {
         id: p.seller.id,
         companyName: p.seller.companyName,
         badges: p.seller.badges,
-        logoUrl: p.seller.logoUrl || undefined,
+        logoUrl: getUrlFromDb(p.seller.logoUrl) || undefined,
       },
       certifications: [],
       rating,
@@ -632,6 +633,14 @@ export async function createProduct(data: {
   sellerName: string;
 }): Promise<ProductItem> {
   try {
+    // Process/upload all product images to Cloudinary (will return JSON strings)
+    const uploadedImages = await Promise.all(
+      data.imageUrls.map(async (url) => {
+        const secureUrl = await uploadImage(url, "product");
+        return { url: secureUrl };
+      })
+    );
+
     if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("mock")) {
       const newProduct: ProductItem = {
         id: `p-${Math.random().toString(36).substring(2, 9)}`,
@@ -642,7 +651,7 @@ export async function createProduct(data: {
         stock: Number(data.stock),
         sustainabilityScore: Number(data.sustainabilityScore),
         sustainabilityDetail: data.sustainabilityDetail,
-        images: data.imageUrls.length > 0 ? data.imageUrls : ["https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80"],
+        images: uploadedImages.map((img) => getUrlFromDb(img.url)),
         category: data.categoryName,
         categoryId: "c_custom",
         isApproved: true, // Auto-approve mock creations for seller ease
@@ -695,7 +704,7 @@ export async function createProduct(data: {
         sellerId: resolvedSellerId,
         isApproved: true, // For demo purposes, auto-approve seller's product creation
         images: {
-          create: data.imageUrls.map((url) => ({ url })),
+          create: uploadedImages,
         },
       },
       include: {
@@ -714,7 +723,7 @@ export async function createProduct(data: {
       stock: p.stock,
       sustainabilityScore: p.sustainabilityScore,
       sustainabilityDetail: p.sustainabilityDetail || "",
-      images: p.images.map((img) => img.url),
+      images: p.images.map((img) => getUrlFromDb(img.url)),
       category: p.category.name,
       categoryId: p.categoryId,
       isApproved: p.isApproved,
@@ -723,6 +732,7 @@ export async function createProduct(data: {
         id: p.seller.id,
         companyName: p.seller.companyName,
         badges: p.seller.badges,
+        logoUrl: getUrlFromDb(p.seller.logoUrl) || undefined,
       },
       certifications: ["EarthCentric Verified"],
       rating: 5.0,
@@ -730,7 +740,13 @@ export async function createProduct(data: {
     };
   } catch (error) {
     console.error("Failed to create product in DB, creating mock:", error);
-    // Fall back to memory create
+    // Fall back to memory create with mock Cloudinary uploads
+    const parsedImages = await Promise.all(
+      data.imageUrls.map(async (url) => {
+        const secureUrl = await uploadImage(url, "product");
+        return getUrlFromDb(secureUrl);
+      })
+    );
     const newProduct: ProductItem = {
       id: `p-${Math.random().toString(36).substring(2, 9)}`,
       name: data.name,
@@ -740,7 +756,7 @@ export async function createProduct(data: {
       stock: Number(data.stock),
       sustainabilityScore: Number(data.sustainabilityScore),
       sustainabilityDetail: data.sustainabilityDetail,
-      images: data.imageUrls.length > 0 ? data.imageUrls : ["https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=80"],
+      images: parsedImages,
       category: data.categoryName,
       categoryId: "c_custom",
       isApproved: true,
@@ -875,6 +891,25 @@ export async function archiveProduct(id: string): Promise<boolean> {
       dynamicProducts = dynamicProducts.filter((p) => p.id !== id);
       return true;
     }
+
+    // Delete product images from Cloudinary before archiving
+    try {
+      const product = await db.product.findUnique({
+        where: { id },
+        include: { images: true }
+      });
+      if (product) {
+        for (const img of product.images) {
+          const publicId = getPublicIdFromDb(img.url);
+          if (publicId) {
+            await deleteImage(publicId);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete product images from Cloudinary during archiving:", err);
+    }
+
     await db.product.update({
       where: { id },
       data: { isArchived: true },

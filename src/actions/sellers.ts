@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/lib/db";
-import { uploadImage } from "@/lib/cloudinary";
+import { uploadImage, deleteImage, getUrlFromDb, getPublicIdFromDb } from "@/lib/cloudinary";
 
 export interface SellerProfile {
   id: string;
@@ -150,7 +150,7 @@ export async function getSellerProfile(userId: string): Promise<SellerProfile | 
       companyName: seller.companyName,
       businessType: seller.businessType,
       description: seller.description || undefined,
-      logoUrl: seller.logoUrl || undefined,
+      logoUrl: getUrlFromDb(seller.logoUrl) || undefined,
       website: seller.website || undefined,
       gstNumber: seller.gstNumber || undefined,
       panNumber: seller.panNumber || undefined,
@@ -161,7 +161,7 @@ export async function getSellerProfile(userId: string): Promise<SellerProfile | 
         id: doc.id,
         type: doc.type,
         fileName: doc.fileName,
-        fileUrl: doc.fileUrl,
+        fileUrl: getUrlFromDb(doc.fileUrl),
       })),
     };
   } catch (e) {
@@ -188,7 +188,7 @@ export async function getSellerProfileById(id: string): Promise<SellerProfile | 
       companyName: seller.companyName,
       businessType: seller.businessType,
       description: seller.description || undefined,
-      logoUrl: seller.logoUrl || undefined,
+      logoUrl: getUrlFromDb(seller.logoUrl) || undefined,
       website: seller.website || undefined,
       gstNumber: seller.gstNumber || undefined,
       panNumber: seller.panNumber || undefined,
@@ -199,7 +199,7 @@ export async function getSellerProfileById(id: string): Promise<SellerProfile | 
         id: doc.id,
         type: doc.type,
         fileName: doc.fileName,
-        fileUrl: doc.fileUrl,
+        fileUrl: getUrlFromDb(doc.fileUrl),
       })),
     };
   } catch (e) {
@@ -224,7 +224,8 @@ export async function submitSellerVerification(data: {
   // Upload all documents to Cloudinary (or mock)
   const uploadedDocs = await Promise.all(
     data.documents.map(async (doc) => {
-      const secureUrl = await uploadImage(doc.fileBase64, `seller_verifications/user_${data.userId}`);
+      // Use automated folder selection for verification documents
+      const secureUrl = await uploadImage(doc.fileBase64, "verification");
       return {
         type: doc.type,
         fileName: doc.fileName,
@@ -239,6 +240,13 @@ export async function submitSellerVerification(data: {
     if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("mock")) {
       const existing = mockSellers.find((s) => s.userId === data.userId);
       if (existing) {
+        // Delete mock assets if any (no-op in practice, but safe)
+        for (const doc of existing.documents) {
+          const publicId = getPublicIdFromDb(doc.fileUrl);
+          if (publicId) {
+            await deleteImage(publicId);
+          }
+        }
         // Update existing record
         existing.companyName = data.companyName;
         existing.businessType = data.businessType;
@@ -253,7 +261,10 @@ export async function submitSellerVerification(data: {
           fileName: doc.fileName,
           fileUrl: doc.fileUrl,
         }));
-        return existing;
+        return {
+          ...existing,
+          documents: existing.documents.map(doc => ({ ...doc, fileUrl: getUrlFromDb(doc.fileUrl) }))
+        };
       }
 
       const newSeller: SellerProfile = {
@@ -275,7 +286,28 @@ export async function submitSellerVerification(data: {
         })),
       };
       mockSellers.push(newSeller);
-      return newSeller;
+      return {
+        ...newSeller,
+        documents: newSeller.documents.map(doc => ({ ...doc, fileUrl: getUrlFromDb(doc.fileUrl) }))
+      };
+    }
+
+    // Database: Delete existing documents from Cloudinary before replacing
+    try {
+      const existingSeller = await db.seller.findUnique({
+        where: { userId: data.userId },
+        include: { documents: true },
+      });
+      if (existingSeller) {
+        for (const doc of existingSeller.documents) {
+          const publicId = getPublicIdFromDb(doc.fileUrl);
+          if (publicId) {
+            await deleteImage(publicId);
+          }
+        }
+      }
+    } catch (dbErr) {
+      console.error("Error cleaning up old seller verification documents:", dbErr);
     }
 
     // Database Insert/Upsert
@@ -339,7 +371,7 @@ export async function submitSellerVerification(data: {
         id: d.id,
         type: d.type,
         fileName: d.fileName,
-        fileUrl: d.fileUrl,
+        fileUrl: getUrlFromDb(d.fileUrl),
       })),
     };
   } catch (error) {
@@ -585,4 +617,54 @@ export async function getSellerAnalyticsTimeSeries(sellerId: string) {
     monthly: { income: monthlyIncome, orders: monthlyOrders },
     yearly: { income: yearlyIncome, orders: yearlyOrders },
   };
+}
+
+export async function updateSellerLogo(sellerId: string, base64Image: string): Promise<string> {
+  const resultJson = await uploadImage(base64Image, "seller-profile");
+  
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("mock")) {
+    const sellers = await getMockSellersInternal();
+    const existing = sellers.find((s) => s.id === sellerId || s.userId === sellerId);
+    if (existing) {
+      existing.logoUrl = resultJson;
+    }
+    return resultJson;
+  }
+  
+  try {
+    const existingSeller = await db.seller.findUnique({
+      where: { id: sellerId },
+      select: { logoUrl: true }
+    });
+    
+    if (existingSeller && existingSeller.logoUrl) {
+      const oldPublicId = getPublicIdFromDb(existingSeller.logoUrl);
+      if (oldPublicId) {
+        await deleteImage(oldPublicId);
+      }
+    }
+    
+    await db.seller.update({
+      where: { id: sellerId },
+      data: { logoUrl: resultJson }
+    });
+  } catch (error) {
+    console.error("Failed to update seller logo in DB:", error);
+  }
+  
+  return resultJson;
+}
+
+export async function updateSellerBanner(sellerId: string, base64Image: string): Promise<string> {
+  const resultJson = await uploadImage(base64Image, "seller-banner");
+  
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("mock")) {
+    const sellers = await getMockSellersInternal();
+    const existing = sellers.find((s) => s.id === sellerId || s.userId === sellerId);
+    if (existing) {
+      (existing as any).bannerUrl = resultJson;
+    }
+  }
+  
+  return resultJson;
 }

@@ -1,6 +1,7 @@
 "use server";
 
 import db from "@/lib/db";
+import { uploadImage, deleteImage, getUrlFromDb, getPublicIdFromDb } from "@/lib/cloudinary";
 import { sendSellerVerificationUpdateEmail } from "@/lib/email";
 import { getMockSellersInternal, updateMockSellerStatusInternal, SellerProfile } from "./sellers";
 
@@ -32,7 +33,7 @@ export async function getPendingSellers(): Promise<SellerProfile[]> {
       companyName: s.companyName,
       businessType: s.businessType,
       description: s.description || undefined,
-      logoUrl: s.logoUrl || undefined,
+      logoUrl: getUrlFromDb(s.logoUrl) || undefined,
       website: s.website || undefined,
       gstNumber: s.gstNumber || undefined,
       panNumber: s.panNumber || undefined,
@@ -42,7 +43,7 @@ export async function getPendingSellers(): Promise<SellerProfile[]> {
         id: d.id,
         type: d.type,
         fileName: d.fileName,
-        fileUrl: d.fileUrl,
+        fileUrl: getUrlFromDb(d.fileUrl),
       })),
     }));
   } catch (e) {
@@ -718,7 +719,7 @@ export async function getPendingProducts(): Promise<any[]> {
         stock: p.stock,
         sustainabilityScore: p.sustainabilityScore,
         sustainabilityDetail: p.sustainabilityDetail || "",
-        images: p.images.map(img => img.url),
+        images: p.images.map(img => getUrlFromDb(img.url)),
         category: p.category.name,
         categoryId: p.categoryId,
         isApproved: p.isApproved,
@@ -809,5 +810,15 @@ export async function rejectProduct(productId: string, reason: string, adminEmai
     });
     return true;
   }
+}
+
+export async function uploadCategoryImage(base64Image: string): Promise<string> {
+  const resultJson = await uploadImage(base64Image, "category");
+  return resultJson;
+}
+
+export async function uploadAdBanner(base64Image: string): Promise<string> {
+  const resultJson = await uploadImage(base64Image, "ad-banner");
+  return resultJson;
 }
 
